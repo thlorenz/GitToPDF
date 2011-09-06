@@ -1,4 +1,3 @@
-
 sys = require 'sys'
 fs = require 'fs'
 path = require 'path'
@@ -6,20 +5,27 @@ exec = require('child_process').exec
 
 theme = "desert"
 
-source_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/bdd_nodechat/"
-target_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/sourcetopdf/html"
+results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf"
+source_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/bdd_nodechat"
+
+project_name = source_dir.split('/').pop()
+target_dir = path.join results_dir, project_name
 
 ignored_dirs = [ '.git' ]
 
-createHtmlFolder = (full_path, callback) ->
-  mode = 0777
-  fs.mkdir full_path, mode, ->
-    console.log "Created folder: ", full_path
-    callback()
+createFolder = (full_path, callback) ->
+  path.exists full_path, (path_exists) ->
+    if not path_exists
+      mode = 0777
+      fs.mkdir full_path, mode, ->
+        console.log "Created folder: ", full_path
+        callback()
+    else
+      callback()
 
 htmlify = (full_source_path, full_target_path, callback) ->
-  args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa\" #{full_source_path}"
-  exec "mvim #{args}", callback
+  args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
+  exec "vim #{args}", callback
 
 isDirectory = (path, callback) ->
   fs.stat path, (err, stats) ->
@@ -48,16 +54,9 @@ readdirRec = (folder, called_from_root, callback) ->
     remaining_filenames = filenames.length
 
     callback_when_complete = ->
-      console.log "\n------------------------------------------------"
-      console.log "Inside #{folder}\ngot called back have #{remaining_filenames} files and #{queries} queries left"
+      # console.log "Inside #{folder}\ngot called back have #{remaining_filenames} files and #{queries} queries left"
 
       if remaining_filenames is 0 and queries is 0
-         
-        console.log "Calling back from #{folder} with: "
-        console.log(file) for file in files
-
-        console.log "++++++++++++++++++++++++++++++++++++++++++++++++\n"
-
         callback null, { files: files }
 
 
@@ -85,6 +84,23 @@ readdirRec = (folder, called_from_root, callback) ->
           if isF then remaining_filenames--
           callback_when_complete()
 
-readdirRec source_dir, true, (err, res) -> 
-  console.log "Found #{res.files.length} files"
-  
+createFolder results_dir, ->
+  readdirRec source_dir, true, (err, res) ->
+    console.log "Found #{res.files.length} files"
+
+    remaining_files = res.files.length
+    for file in res.files
+      do (file) ->
+        folder = (path.dirname file).replace(source_dir, target_dir)
+        filename = path.basename(file) + '.html'
+        full_target_path = path.join folder, filename
+
+        console.log "Creating html for:\n#{file} as:\n#{full_target_path}"
+        createFolder folder, ->
+          htmlify file, full_target_path, ->
+            remaining_files--
+            file_name = path.basename file
+            console.log "Finished #{file_name}, #{remaining_files} more files to go"
+
+
+
