@@ -1,3 +1,5 @@
 server*.js
 bootstrap.js
 .livereload
+node_modules
+.DS_Store
