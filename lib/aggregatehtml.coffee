@@ -11,7 +11,7 @@ cleanPath = (path) ->
   return path
 
 project_name = 'bdd_nodechat'
-
+root_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf"
 
 files = [
     path: '~/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/bdd_nodechat',
@@ -23,12 +23,7 @@ files = [
     path: '~/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/bdd_nodechat/spec',
     file_name: 'server_specs_vows.coffee.html'
 ]
-###
-  fs.readFile fullpath, encoding='utf8', (err, data) ->
-    if err
-      console.log "Error", err
-      throw err
-###
+
 extractHtml = (fullpath, cb) ->
   depth = 1
   inlinecss fullpath, (err, data) ->
@@ -64,7 +59,6 @@ Seq(files)
     fullpath = cleanPath(path.join file.path, file.file_name)
     extractHtml fullpath, (err, res) =>
       file.html = res
-      console.log res
       @(err, file)
   )
   .seq(->
@@ -84,8 +78,6 @@ Seq(files)
     @(null, aggregateHtml)
   )
   .seq((html) -> fs.writeFile('code.html', html, this))
-  .seq((html) -> console.log html)
-
   .catch((err) -> console.log "Error: ", err)
 
 ###

@@ -2,6 +2,7 @@ sys = require 'sys'
 fs = require 'fs'
 path = require 'path'
 exec = require('child_process').exec
+fu = require './lib/fileutils.coffee'
 
 theme = "desert"
 
@@ -27,22 +28,6 @@ htmlify = (full_source_path, full_target_path, callback) ->
   args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
   exec "vim #{args}", callback
 
-isDirectory = (path, callback) ->
-  fs.stat path, (err, stats) ->
-    if err
-      console.log err
-      callback err, null
-      return
-    callback null, stats.isDirectory()
-
-isFile = (path, callback) ->
-  fs.stat path, (err, stats) ->
-    if err
-      console.log err
-      callback err, null
-      return
-    callback null, stats.isFile()
-
 readdirRec = (folder, called_from_root, callback) ->
   queries = 0
   files = []
@@ -64,7 +49,7 @@ readdirRec = (folder, called_from_root, callback) ->
       do (filename) ->
 
         fullpath = path.join(folder, filename)
-        isDirectory fullpath, (err, isDir) ->
+        fu.isDirectory fullpath, (err, isDir) ->
           if not err and isDir
             remaining_filenames--
             
@@ -79,7 +64,7 @@ readdirRec = (folder, called_from_root, callback) ->
                 queries--
                 callback_when_complete()
 
-        isFile fullpath, (err, isF) ->
+        fu.isFile fullpath, (err, isF) ->
           files.push fullpath unless err or not isF
           if isF then remaining_filenames--
           callback_when_complete()
