@@ -3,6 +3,7 @@ path = require 'path'
 Hash = require 'hashish'
 Seq = require 'seq'
 inlinecss = require './inlinecss.coffee'
+fu = require './fileutils.coffee'
 
 # Utils
 cleanPath = (path) ->
@@ -54,43 +55,58 @@ extractHtml = (fullpath, cb) ->
     cb null, "<h#{depth}>#{title}</h#{depth}>\n#{body}"
     return
 
-Seq(files)
-  .seqMap((file) ->
-    fullpath = cleanPath(path.join file.path, file.file_name)
-    extractHtml fullpath, (err, res) =>
-      file.html = res
-      @(err, file)
-  )
-  .seq(->
-    @stack.sort (f0, f1) ->
-      # shorter paths go first
-      l0 = f0.path.length
-      l1 = f1.path.length
-      if (l0 is not l1) then return l0 - l1
-      # if in same path we sort by filename
-      return [f0, f1].map((f) -> f.file_name).sort()
-    @(null, @stack)
-  )
-  .seq((sorted_files) ->
-    aggregateHtml = "<body>\n"
-    aggregateHtml = aggregateHtml.concat(sorted_files.map((f) -> f.html).join())
-    aggregateHtml = aggregateHtml.concat("\n</body>")
-    @(null, aggregateHtml)
-  )
-  .seq((html) -> fs.writeFile('code.html', html, this))
-  .catch((err) -> console.log "Error: ", err)
-
-###
-single_file_path = path.join cleanPath(source_path), file_name
 
 
-Seq().seq(->
-  fs.readdir __dirname, this
-).flatten().parEach((file) ->
-  fs.stat __dirname + "/" + file, @into(file)
-).seq ->
-  sizes = Hash.map(@vars, (s) ->
-  a   s.size
-  )
-  console.dir sizes
 
+
+getAllSubFolders = (root_folder, depth, cb) ->
+  sub_folders = []
+
+  Seq()
+    .seq(-> fs.readdir root_folder, this)
+    .flatten()
+    .seqFilter((file_name) -> fu.isDirectory (path.join root_folder, file_name), this)
+    .seqEach((folder) ->
+      if (folder is undefined)
+        this()
+      else
+        full_path = path.join root_folder, folder
+        console.log "Found folder", full_path
+        getAllSubFolders full_path, depth + 1, (err, res) => this([path: full_path, depth: depth])
+    )
+    .seq((res) ->
+      console.log "calling back with", res
+      cb null,res)
+
+getAllSubFolders root_dir, 0, (err, res) -> console.log "DONE", res
+
+
+
+
+
+mapFilesToHtml = (files) ->
+  Seq(files)
+    .seqMap((file) ->
+      fullpath = cleanPath(path.join file.path, file.file_name)
+      extractHtml fullpath, (err, res) =>
+        file.html = res
+        @(err, file)
+    )
+    .seq(->
+      @stack.sort (f0, f1) ->
+        # shorter paths go first
+        l0 = f0.path.length
+        l1 = f1.path.length
+        if (l0 is not l1) then return l0 - l1
+        # if in same path we sort by filename
+        return [f0, f1].map((f) -> f.file_name).sort()
+      @(null, @stack)
+    )
+    .seq((sorted_files) ->
+      aggregateHtml = "<body>\n"
+      aggregateHtml = aggregateHtml.concat(sorted_files.map((f) -> f.html).join())
+      aggregateHtml = aggregateHtml.concat("\n</body>")
+      @(null, aggregateHtml)
+    )
+    .seq((html) -> fs.writeFile('code.html', html, this))
+    .catch((err) -> console.log "Error: ", err)

@@ -39,7 +39,6 @@ readdirRec = (folder, called_from_root, callback) ->
     remaining_filenames = filenames.length
 
     callback_when_complete = ->
-      # console.log "Inside #{folder}\ngot called back have #{remaining_filenames} files and #{queries} queries left"
 
       if remaining_filenames is 0 and queries is 0
         callback null, { files: files }
