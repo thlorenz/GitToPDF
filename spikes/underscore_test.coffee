@@ -63,37 +63,40 @@ parallel = ->
   ]
   , (err) -> console.log "Result", result)
 
-waterfall0 = ->
-  ((finalcb) -> _.waterfall [ (callback) ->
-      console.log "1"
-      callback null, "one", "two"
-    , (arg1, arg2, callback) ->
-      console.log "2", arg1, arg2
-      callback null, "three"
-    , (arg1, callback) ->
-      finalcb null, "DONE"
-     ])((err, res) -> console.log res)
-
 class Pipe
-
   constructor: (@stack = []) ->
+    @stack = [@stack] if not _(@stack).isArray()
 
-  push: (res) -> @stack.push res; @
+  push: (result) ->
+    @stack.push result
+    @
 
 waterfall = ->
   ((finalcb) -> _.waterfall [ (cb) ->
     scheduleElement elements.pop(), (err, res) ->
-      # Wrap reulst array inside a pipe object to prevent underscore from unflattening it to argument list
-      cb(err, new Pipe [res])
+      # Wrap result array inside a pipe object to prevent it from being unflattened into argument list
+      cb(err, new Pipe res)
   ,
-    (pipe, cb) -> 
-      console.log pipe
-      scheduleElement elements.pop(), (err, res) -> cb(err, pipe.push res)
+    (pipe, cb) -> scheduleElement elements.pop(), (err, res) -> cb(err, pipe.push res)
   ,
     (pipe, cb) -> scheduleElement elements.pop(), (err, res) -> finalcb(err, pipe.push res)
+
    ])((err, pipe) -> console.log pipe.stack)
-  
 
+waterfall_mapreduce = ->
+  _.waterfall [ (next) ->
+    _(elements).asyncMap(
+      (x, cb) -> scheduleElement(x, cb)
+      (err, res) -> next(err, res)
+    )
+  ,
+    (res, next) ->
+     _(res).asyncReduce(0
+        (acc, x, cb) -> scheduleElement x, (err, res) -> cb(err, acc + res)
+        (err, res) -> next(err, res)
+     )
+   ,
+     (res, _) -> console.log "Reduced", res
+  ]
 
-
-waterfall()
+waterfall_mapreduce()
