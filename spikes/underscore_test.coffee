@@ -42,26 +42,24 @@ mapReduce = ->
         printResult)
 
 series = ->
-  result = []
   _.series([
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ,
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ,
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ]
-  , (err) -> console.log "Result", result)
+  , (err, results) -> console.log "Result", results)
 
 parallel = ->
-  result = []
   _.parallel([
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ,
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ,
-    (next) -> scheduleElement elements.pop(), (err, res) -> result.push res; next()
+    (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
   ]
-  , (err) -> console.log "Result", result)
+  , (err, results) -> console.log "Result", results)
 
 class Pipe
   constructor: (@stack = []) ->
@@ -98,5 +96,5 @@ waterfall_mapreduce = ->
    ,
      (res, _) -> console.log "Reduced", res
   ]
+parallel()
 
-waterfall_mapreduce()
