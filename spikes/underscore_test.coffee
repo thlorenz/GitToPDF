@@ -51,6 +51,15 @@ series = ->
   ]
   , (err, results) -> console.log "Result", results)
 
+series_object = ->
+  _.series({
+  one: (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
+  ,
+  two: (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
+  ,
+  three: (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
+  }, (err, results) -> console.log "Result", results)
+
 parallel = ->
   _.parallel([
     (next) -> scheduleElement elements.pop(), (err, res) -> next(err, res)
@@ -96,5 +105,4 @@ waterfall_mapreduce = ->
    ,
      (res, _) -> console.log "Reduced", res
   ]
-parallel()
-
+series_object()
