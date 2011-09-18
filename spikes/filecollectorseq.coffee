@@ -26,15 +26,32 @@ collectFilesAndFolders = (fullPath, callback) ->
     .flatten().seqFilter((x) -> fu.isDirectory getFullPath(x), this).unflatten()
     .seq((subFolders) -> callback(null, { files: ctx.files, subFolders }))
 
-getFoldersRec = (fullPath, name, depth, done) ->
-  console.log "Processing: #{fullPath} [#{depth}]"
-  collectFilesAndFolders fullPath, (err, res) -> console.log res
+getFoldersRec = (name, fullPath, depth, done) ->
+  ctx = { }
+
+  getFullPath = (x) -> path.join fullPath, x
+
+  Seq()
+    .seq(-> collectFilesAndFolders fullPath, this)
+    .seq((res) ->
+      if res.subFolders.length == 0
+        done null, { name, files: res.files, folders: [] }
+        done null, new Folder(name, fullPath, depth, res.files, [])
+      else
+        ctx = res
+        this(null, res.subFolders)
+    )
+    .flatten().seqMap((folder) ->
+      getFoldersRec("#{name}/#{folder}", getFullPath(folder), depth + 1, this)
+    ).unflatten()
+    .seq((folders) ->
+      done null, new Folder(name, fullPath, depth, ctx.files, folders)
+      this())
 
 getFoldersRec(
+  "bdd_nodechat"
   root_dir
-  "root"
   0
   (err, res) ->
-    console.log "Error", err
     console.log res
  )
