@@ -1,0 +1,26 @@
+{
+    "name" : "gittopdf",
+    "version" : "0.0.1",
+    "description" : "Convert a git repo into a pdf file to read on ipad",
+    "main" : "./index.js",
+    "repository" : {
+        "type" : "git",
+        "url" : "http://github.com/thlorez/gittopdf.git"
+    },
+    "dependencies" : {
+        "seq": ">=0.3 <0.1"
+        "underscore": ">=1.1.0 <0.1"
+    },
+    "keywords" : [
+      "source", "github", "iPad", "reading"
+    ],
+    "author" : {
+        "name" : "Thorsten Lorena",
+        "email" : "thlorenz@gmx.de",
+        "url" : "http://thorstenlorenz.wordpress.com"
+    },
+    "license" : "MIT/X11",
+    "engine" : {
+        "node" : ">=0.4.0"
+    }
+}

@@ -3,10 +3,6 @@ path = require 'path'
 fu = require '../lib/fileutils.coffee'
 _ = require 'underscore'
 
-delay = (elem, cb) ->
-  timeout = Math.ceil(Math.random() * 30)
-  setTimeout (-> cb(null, elem)), timeout
-
 root_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/bdd_nodechat"
 
 class Folder
