@@ -22,10 +22,14 @@ isFile = (path, callback) ->
       return
     callback null, stats.isFile()
 
-collectFilesAndFolders = (fullPath, includedExts, ignoredFiles, callback) ->
+collectFilesAndFolders = (fullPath, config, callback) ->
   ctx = { }
 
+  includedExts = config?.includedExts or []
+  ignoredFiles = config?.ignoredFiles or []
+
   getFullPath = (x) -> path.join fullPath, x
+
   matchesExts = (x) ->
     _(includedExts).isEmpty() or
     _(includedExts).include(path.extname x)
@@ -48,13 +52,19 @@ collectFilesAndFolders = (fullPath, includedExts, ignoredFiles, callback) ->
     .flatten().seqFilter((x) -> isDirectory getFullPath(x), this).unflatten()
     .seq((subFolders) -> callback(null, { files: ctx.files, subFolders }))
 
-getFoldersRec = (name, fullPath, depth, includedExts, ignoredFiles, done) ->
+getFoldersRec = (fullPath, config, done) ->
+
+  depth = config?.depth or 0
+  name = config?.name or path.basename fullPath
+  includedExts = config?.includedExts or []
+  ignoredFiles = config?.ignoredFiles or []
+
   ctx = { }
 
   getFullPath = (x) -> path.join fullPath, x
 
   Seq()
-    .seq(-> collectFilesAndFolders fullPath, includedExts, ignoredFiles, this)
+    .seq(-> collectFilesAndFolders fullPath, config, this)
     .seq((res) ->
       # Call back immediately if there are no sub folders
       if res.subFolders.length == 0
@@ -66,11 +76,12 @@ getFoldersRec = (name, fullPath, depth, includedExts, ignoredFiles, done) ->
     # Handle all subfolders
     .flatten().seqMap((folder) ->
       getFoldersRec(
-        "#{name}/#{folder}"
-        getFullPath(folder)
-        depth + 1
-        includedExts
-        ignoredFiles
+        getFullPath(folder), {
+          name: "#{name}/#{folder}"
+          depth: depth + 1
+          includedExts
+          ignoredFiles
+        },
         this)
     ).unflatten()
     .seq((folders) ->

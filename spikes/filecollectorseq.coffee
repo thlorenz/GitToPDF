@@ -9,11 +9,8 @@ root_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/
 
 
 fu.getFoldersRec(
-  "bdd_nodechat"
   root_dir
-  0
-  includedExts
-  ignoredFiles
+  { includedExts, ignoredFiles }
   (err, res) ->
     console.log res
  )
