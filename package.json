@@ -8,14 +8,14 @@
         "url" : "http://github.com/thlorez/gittopdf.git"
     },
     "dependencies" : {
-        "seq": ">=0.3 <0.1"
-        "underscore": ">=1.1.0 <0.1"
+        "seq": ">=0.3 <0.5",
+        "underscore": ">=1.1 <1.2"
     },
     "keywords" : [
       "source", "github", "iPad", "reading"
     ],
     "author" : {
-        "name" : "Thorsten Lorena",
+        "name" : "Thorsten Lorenz",
         "email" : "thlorenz@gmx.de",
         "url" : "http://thorstenlorenz.wordpress.com"
     },
