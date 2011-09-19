@@ -6,6 +6,17 @@ _ = require 'underscore'
 class Folder
   constructor: (@name, @fullPath, @depth, @files, @folders) ->
 
+# Creates a folder for the given full path unless it exists already
+createFolder = (full_path, callback) ->
+  path.exists full_path, (path_exists) ->
+    if not path_exists
+      mode = 0777
+      fs.mkdir full_path, mode, ->
+        callback()
+    else
+      callback()
+
+# Returns true if the given path points at a directory, otherwise false
 isDirectory = (path, callback) ->
   fs.stat path, (err, stats) ->
     if err
@@ -14,6 +25,7 @@ isDirectory = (path, callback) ->
       return
     callback null, stats.isDirectory()
 
+# Returns true if the given path points at a file, otherwise false
 isFile = (path, callback) ->
   fs.stat path, (err, stats) ->
     if err
@@ -22,11 +34,14 @@ isFile = (path, callback) ->
       return
     callback null, stats.isFile()
 
+# Collects all files and sub folders for the given path
+# Calls back with { files: [ .. ], subFolders: [ .. ] }
 collectFilesAndFolders = (fullPath, config, callback) ->
   ctx = { }
 
   includedExts = config?.includedExts or []
   ignoredFiles = config?.ignoredFiles or []
+  ignoredFolders = config?.ignoredFolders or []
 
   getFullPath = (x) -> path.join fullPath, x
 
@@ -49,15 +64,30 @@ collectFilesAndFolders = (fullPath, config, callback) ->
     .seq((files) -> ctx.files = files; this(null, ctx.items))
 
     # Collect Folders
-    .flatten().seqFilter((x) -> isDirectory getFullPath(x), this).unflatten()
+    .flatten()
+    .seqFilter((x) ->
+      isDirectory getFullPath(x), (err, isDir) =>
+        isIncluded = not _(ignoredFolders).include x
+        this(null, isDir and isIncluded)
+    )
+    .unflatten()
     .seq((subFolders) -> callback(null, { files: ctx.files, subFolders }))
 
+# Collects all files and folders for the given path recursively
+# Returns with tree of Folder object (see top of file)
+# config may contain:
+#   depth: folder depth
+#   name:  name to give to folder, by default last folder of full path is used
+#   includedExts: extensions of files to be included, by default all are included
+#   ignoredFiles: files to be ignored, by default no files are ignored 
+#   ignoredFolders: folder to be ignored in the form of 'parent/child', by default no folder are ignored 
 getFoldersRec = (fullPath, config, done) ->
 
   depth = config?.depth or 0
   name = config?.name or path.basename fullPath
   includedExts = config?.includedExts or []
   ignoredFiles = config?.ignoredFiles or []
+  ignoredFolders = config?.ignoredFolders or []
 
   ctx = { }
 
@@ -81,6 +111,7 @@ getFoldersRec = (fullPath, config, done) ->
           depth: depth + 1
           includedExts
           ignoredFiles
+          ignoredFolders
         },
         this)
     ).unflatten()
@@ -88,4 +119,4 @@ getFoldersRec = (fullPath, config, done) ->
       done null, new Folder(name, fullPath, depth, ctx.files, folders)
       this())
 
-module.exports = { isFile, isDirectory, collectFilesAndFolders, getFoldersRec }
+module.exports = { createFolder, isFile, isDirectory, collectFilesAndFolders, getFoldersRec }
