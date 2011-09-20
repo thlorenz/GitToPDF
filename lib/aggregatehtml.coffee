@@ -25,36 +25,6 @@ files = [
     file_name: 'server_specs_vows.coffee.html'
 ]
 
-extractHtml = (fullpath, cb) ->
-  depth = 1
-  inlinecss fullpath, (err, data) ->
-    if err
-      console.log "Error", err
-      throw err
-
-    title_rx = ///
-      \<title\>
-        ((.|\r|\n)+)
-      \</title\>
-              ///
-
-    body_rx = ///
-      \<body(.|\r|\n)*?\>
-        ((.|\r|\n)+)
-      \</body\>
-              ///
-
-    match = title_rx.exec data
-    title = match[1]
-    cutoffpoint = title.lastIndexOf(project_name) + project_name.length + 1
-    title = title.substr cutoffpoint
-
-    match = body_rx.exec data
-    body = match[2]
-
-    cb null, "<h#{depth}>#{title}</h#{depth}>\n#{body}"
-    return
-
 
 
 

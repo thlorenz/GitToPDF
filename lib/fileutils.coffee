@@ -6,6 +6,12 @@ _ = require 'underscore'
 class Folder
   constructor: (@name, @fullPath, @depth, @files, @folders) ->
 
+# Replaces ~ with the environments Home path
+cleanPath = (path) ->
+  if (path.indexOf '~') is 0
+    return process.env.HOME + path.substr(1)
+  return path
+
 # Creates a folder for the given full path unless it exists already
 createFolder = (full_path, callback) ->
   path.exists full_path, (path_exists) ->
@@ -119,4 +125,11 @@ getFoldersRec = (fullPath, config, done) ->
       done null, new Folder(name, fullPath, depth, ctx.files, folders)
       this())
 
-module.exports = { createFolder, isFile, isDirectory, collectFilesAndFolders, getFoldersRec }
+module.exports = {
+  cleanPath
+  createFolder
+  isFile
+  isDirectory
+  collectFilesAndFolders
+  getFoldersRec
+}
