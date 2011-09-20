@@ -11,10 +11,10 @@ createFolder = (full_path, callback) ->
   path.exists full_path, (path_exists) ->
     if not path_exists
       mode = 0777
-      fs.mkdir full_path, mode, ->
-        callback()
+      fs.mkdir full_path, mode, (err, res) ->
+        callback(err)
     else
-      callback()
+      callback(null)
 
 # Returns true if the given path points at a directory, otherwise false
 isDirectory = (path, callback) ->
