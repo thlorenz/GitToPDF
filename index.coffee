@@ -15,8 +15,6 @@ source_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/bdd_nod
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
 
-ignored_dirs = [ '.git', 'node_modules' ]
-
 htmlify = (full_source_path, full_target_path, callback) ->
   args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
   exec "mvim #{args}", callback
@@ -45,7 +43,7 @@ extractHtml = (fullpath, title, depth, cb) ->
 
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore' ]
-ignoredFolders = ['.git']
+ignoredFolders = [ '.git', 'node_modules', 'reading' ]
 
 convertSourceToHtml = (done) ->
   fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders }, (err, res) ->
@@ -54,8 +52,9 @@ convertSourceToHtml = (done) ->
       targetfolder = path.join target_dir, folder.name
 
       rootFiles = folder.files.map (x) -> {
+        foldername: folder.name
         name: "#{folder.name}/#{x}"
-        sourcepath : path.join source_dir, x
+        sourcepath : path.join folder.fullPath, x
         targetpath : path.join targetfolder, x + '.html'
         targetfolder
         depth: folder.depth }
@@ -89,7 +88,7 @@ readHtmlFiles = (done) ->
       this(null, null)
     )
     .seq(->
-      console.log "Reading Html: OK"
+      console.log "\nReading Html: OK"
       res = _(htmlDocs).chain()
         .sortBy((x) -> x.depth)
         .pluck('html')
@@ -102,4 +101,7 @@ readHtmlFiles = (done) ->
     .catch((err) -> console.log "Error: ", err)
 
 readHtmlFiles( -> console.log "DONE")
+
+###
+###
   
