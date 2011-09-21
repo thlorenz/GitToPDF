@@ -111,15 +111,16 @@ getFoldersRec = (fullPath, config, done) ->
     )
     # Handle all subfolders
     .flatten().seqMap((folder) ->
-      getFoldersRec(
-        getFullPath(folder), {
-          name: "#{name}/#{folder}"
-          depth: depth + 1
-          includedExts
-          ignoredFiles
-          ignoredFolders
-        },
-        this)
+      process.nextTick =>
+        getFoldersRec(
+          getFullPath(folder), {
+            name: "#{name}/#{folder}"
+            depth: depth + 1
+            includedExts
+            ignoredFiles
+            ignoredFolders
+          },
+          this)
     ).unflatten()
     .seq((folders) ->
       done null, new Folder(name, fullPath, depth, ctx.files, folders)

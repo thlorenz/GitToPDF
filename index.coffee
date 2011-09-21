@@ -82,7 +82,7 @@ readHtmlFiles = (done) ->
     .seq(-> convertSourceToHtml this)
     .seq((res) -> console.log "\nHtml Conversion: OK"; this(null, res))
     .flatten()
-    .parMap((x) -> extractHtml(x.targetpath, x.name, x.depth, this))
+    .parMap((x) -> extractHtml(x.targetpath, x.name, x.depth + 1, this))
     .parEach((x) ->
       process.stdout.write "."
       htmlDocs.push x
