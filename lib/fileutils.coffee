@@ -4,7 +4,7 @@ Seq = require 'seq'
 _ = require 'underscore'
 
 class Folder
-  constructor: (@name, @fullPath, @depth, @files, @folders) ->
+  constructor: (@name, @fullname, @fullPath, @depth, @files, @folders) ->
 
 # Replaces ~ with the environments Home path
 cleanPath = (path) ->
@@ -91,6 +91,7 @@ getFoldersRec = (fullPath, config, done) ->
 
   depth = config?.depth or 0
   name = config?.name or path.basename fullPath
+  fullname = config?.fullname or fullPath
   includedExts = config?.includedExts or []
   ignoredFiles = config?.ignoredFiles or []
   ignoredFolders = config?.ignoredFolders or []
@@ -104,7 +105,7 @@ getFoldersRec = (fullPath, config, done) ->
     .seq((res) ->
       # Call back immediately if there are no sub folders
       if res.subFolders.length == 0
-        done null, new Folder(name, fullPath, depth, res.files, [])
+        done null, new Folder(name, fullname, fullPath, depth, res.files, [])
       else
         ctx = res
         this(null, res.subFolders)
@@ -114,7 +115,8 @@ getFoldersRec = (fullPath, config, done) ->
       process.nextTick =>
         getFoldersRec(
           getFullPath(folder), {
-            name: "#{name}/#{folder}"
+            name: folder
+            fullname: "#{name}/#{folder}"
             depth: depth + 1
             includedExts
             ignoredFiles
@@ -123,7 +125,7 @@ getFoldersRec = (fullPath, config, done) ->
           this)
     ).unflatten()
     .seq((folders) ->
-      done null, new Folder(name, fullPath, depth, ctx.files, folders)
+      done null, new Folder(name, fullname, fullPath, depth, ctx.files, folders)
       this())
 
 module.exports = {

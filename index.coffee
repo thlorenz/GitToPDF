@@ -24,10 +24,9 @@ compareIgnoreCase = (a, b) ->
 
 htmlify = (full_source_path, full_target_path, callback) ->
   args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
-  callback()
-  # exec "mvim #{args}", callback
+  exec "mvim #{args}", callback
 
-extractHtml = (fullpath, name, depth, foldername, isFirstFileInFolder, cb) ->
+extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInFolder, cb) ->
   inlinecss fullpath, './lib', (err, data) ->
     if err
       console.log "Error", err
@@ -42,8 +41,11 @@ extractHtml = (fullpath, name, depth, foldername, isFirstFileInFolder, cb) ->
     body = match[0]
 
     
-    folderHeader = if isFirstFileInFolder then "<h#{depth}>#{foldername}</h#{depth}><br/><br/>" else ''
-    cb null, { fullname: "#{foldername}/#{name}", depth, html: "#{folderHeader}<h#{depth + 1}>#{name}</h#{depth + 1}>in <span>#{foldername}</span><br\>#{body}" }
+    folderHeader = if isFirstFileInFolder
+      "<h#{depth}>#{foldername}</h#{depth}><span>(#{folderfullname})</span><br/><br/>"
+    else
+      ''
+    cb null, { fullname: "#{folderfullname}/#{name}", depth, html: "#{folderHeader}<h#{depth + 1}>#{name}</h#{depth + 1}><span>(#{folderfullname})</span><br\>#{body}" }
 
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore' ]
@@ -62,6 +64,7 @@ convertSourceToHtml = (done) ->
           mappedFile = {
             isFirstFileInFolder
             foldername: folder.name
+            folderfullname: folder.fullname
             name: x
             sourcepath : path.join folder.fullPath, x
             targetpath : path.join targetfolder, x + '.html'
@@ -78,7 +81,7 @@ convertSourceToHtml = (done) ->
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
     Seq(mappedFiles)
-      .parEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
+      .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
       .parEach((x) ->
         htmlify x.sourcepath, x.targetpath, (err, res) =>
           process.stdout.write "."
@@ -99,7 +102,7 @@ readHtmlFiles = (done) ->
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
     .parMap((x) ->
-      extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.isFirstFileInFolder, (err, res) =>
+      extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, (err, res) =>
         process.stdout.write "."
         this(err, res)
       )
