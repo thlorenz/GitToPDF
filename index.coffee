@@ -67,7 +67,6 @@ convertSourceToHtml = (done) ->
             targetpath : path.join targetfolder, x + '.html'
             targetfolder
             depth: folder.depth + 1 }
-          console.log "Mapped #{mappedFile.name}, isFirst #{isFirstFileInFolder}"
           isFirstFileInFolder = false
           return mappedFile
 
@@ -79,7 +78,7 @@ convertSourceToHtml = (done) ->
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
     Seq(mappedFiles)
-      .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
+      .parEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
       .parEach((x) ->
         htmlify x.sourcepath, x.targetpath, (err, res) =>
           process.stdout.write "."
@@ -89,23 +88,25 @@ convertSourceToHtml = (done) ->
 
 readHtmlFiles = (done) ->
   htmlDocs = []
-  toc = []
+    
+  compareDocs = (a, b) ->
+    if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
+    if (a.depth > b.depth) then return 1 else return -1
+
   Seq()
     .seq(-> convertSourceToHtml this)
-    .seq((res) -> console.log "\nHtml Conversion: OK"; this(null, res))
+    .seq((res) -> process.stdout.write " OK"; this(null, res))
+    .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
-    .parMap((x) -> extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.isFirstFileInFolder, this))
-    .parEach((x) ->
-      process.stdout.write "."
-      htmlDocs.push x
-      this(null, null)
+    .parMap((x) ->
+      extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.isFirstFileInFolder, (err, res) =>
+        process.stdout.write "."
+        this(err, res)
+      )
     )
+    .parEach((x) -> htmlDocs.push x; this())
+    .seq(-> process.stdout.write " OK"; this())
     .seq(->
-      console.log "\nReading Html: OK"
-      compareDocs = (a, b) ->
-        if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
-        if (a.depth > b.depth) then return 1 else return -1
-
       res = _(htmlDocs)
         .chain()
         .sort(compareDocs)
@@ -118,21 +119,4 @@ readHtmlFiles = (done) ->
     .seq(-> done(null, null))
     .catch((err) -> console.log "Error: ", err)
 
-readHtmlFiles( -> console.log "DONE")
-
-###
-
-        .sort((a, b) ->
-        )
-    .seq((res) ->
-        _(res)
-          .chain()
-          .sortBy((x) -> x.name)
-          .groupBy((x) -> x.foldername)
-          .each((group) ->
-            headerDepth = group[0].depth + 1
-            group[0].header = "<h#{headerDepth}>#{group[0].foldername}</h#{headerDepth}><br/>")
-        this(null, res)
-    )
-###
-  
+readHtmlFiles( -> console.log "\nEverything OK")
