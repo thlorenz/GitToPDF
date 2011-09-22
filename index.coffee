@@ -15,21 +15,23 @@ source_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/bdd_nod
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
 
+compareIgnoreCase = (a, b) ->
+  au = a.toUpperCase()
+  bu = b.toUpperCase()
+  if (au == bu) then return 0
+  if (au > bu) then return 1
+  return -1
+
 htmlify = (full_source_path, full_target_path, callback) ->
   args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
-  exec "mvim #{args}", callback
+  callback()
+  # exec "mvim #{args}", callback
 
-extractHtml = (fullpath, title, depth, cb) ->
+extractHtml = (fullpath, name, depth, foldername, isFirstFileInFolder, cb) ->
   inlinecss fullpath, './lib', (err, data) ->
     if err
       console.log "Error", err
       throw err
-
-    title_rx = ///
-      \<title\>
-        ((.|\r|\n)+)
-      \</title\>
-              ///
 
     body_rx = ///
       \<body(.|\r|\n)*?\>
@@ -39,7 +41,9 @@ extractHtml = (fullpath, title, depth, cb) ->
     match = body_rx.exec data
     body = match[0]
 
-    cb null, { title, depth, html: "<h#{depth}>#{title}</h#{depth}><br\>#{body}" }
+    
+    folderHeader = if isFirstFileInFolder then "<h#{depth}>#{foldername}</h#{depth}><br/><br/>" else ''
+    cb null, { fullname: "#{foldername}/#{name}", depth, html: "#{folderHeader}<h#{depth + 1}>#{name}</h#{depth + 1}>in <span>#{foldername}</span><br\>#{body}" }
 
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore' ]
@@ -51,13 +55,21 @@ convertSourceToHtml = (done) ->
     mapFiles = (folder) ->
       targetfolder = path.join target_dir, folder.name
 
-      rootFiles = folder.files.map (x) -> {
-        foldername: folder.name
-        name: "#{folder.name}/#{x}"
-        sourcepath : path.join folder.fullPath, x
-        targetpath : path.join targetfolder, x + '.html'
-        targetfolder
-        depth: folder.depth }
+      isFirstFileInFolder = true
+      rootFiles = folder.files
+        .sort(compareIgnoreCase)
+        .map (x) ->
+          mappedFile = {
+            isFirstFileInFolder
+            foldername: folder.name
+            name: x
+            sourcepath : path.join folder.fullPath, x
+            targetpath : path.join targetfolder, x + '.html'
+            targetfolder
+            depth: folder.depth + 1 }
+          console.log "Mapped #{mappedFile.name}, isFirst #{isFirstFileInFolder}"
+          isFirstFileInFolder = false
+          return mappedFile
 
       subFiles = folder.folders.map(mapFiles)
       _(rootFiles.concat(subFiles)).flatten()
@@ -77,11 +89,12 @@ convertSourceToHtml = (done) ->
 
 readHtmlFiles = (done) ->
   htmlDocs = []
+  toc = []
   Seq()
     .seq(-> convertSourceToHtml this)
     .seq((res) -> console.log "\nHtml Conversion: OK"; this(null, res))
     .flatten()
-    .parMap((x) -> extractHtml(x.targetpath, x.name, x.depth + 1, this))
+    .parMap((x) -> extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.isFirstFileInFolder, this))
     .parEach((x) ->
       process.stdout.write "."
       htmlDocs.push x
@@ -89,11 +102,16 @@ readHtmlFiles = (done) ->
     )
     .seq(->
       console.log "\nReading Html: OK"
-      res = _(htmlDocs).chain()
-        .sortBy((x) -> x.depth)
+      compareDocs = (a, b) ->
+        if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
+        if (a.depth > b.depth) then return 1 else return -1
+
+      res = _(htmlDocs)
+        .chain()
+        .sort(compareDocs)
         .pluck('html')
-        .reduce(((acc, x) -> "#{acc}<br/><br/>#{x}"), "")
         .value()
+        .join('<br/><br/>')
 
       fs.writeFile(path.join(target_dir, 'code.html'), res, this)
     )
@@ -103,5 +121,18 @@ readHtmlFiles = (done) ->
 readHtmlFiles( -> console.log "DONE")
 
 ###
+
+        .sort((a, b) ->
+        )
+    .seq((res) ->
+        _(res)
+          .chain()
+          .sortBy((x) -> x.name)
+          .groupBy((x) -> x.foldername)
+          .each((group) ->
+            headerDepth = group[0].depth + 1
+            group[0].header = "<h#{headerDepth}>#{group[0].foldername}</h#{headerDepth}><br/>")
+        this(null, res)
+    )
 ###
   
