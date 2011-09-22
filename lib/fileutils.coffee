@@ -116,7 +116,7 @@ getFoldersRec = (fullPath, config, done) ->
         getFoldersRec(
           getFullPath(folder), {
             name: folder
-            fullname: "#{name}/#{folder}"
+            fullname: "#{fullname}/#{folder}"
             depth: depth + 1
             includedExts
             ignoredFiles

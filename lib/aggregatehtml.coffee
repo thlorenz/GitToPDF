@@ -1,4 +1,4 @@
-fs = require 'fs'
+es = require 'fs'
 path = require 'path'
 Hash = require 'hashish'
 Seq = require 'seq'

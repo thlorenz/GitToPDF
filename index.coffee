@@ -10,7 +10,7 @@ _ = require 'underscore'
 theme = "desert"
 
 results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/"
-source_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/bdd_nodechat"
+source_dir = fu.cleanPath "~/dev/js/node/source/connect"
 
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
@@ -52,10 +52,10 @@ ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]
 
 convertSourceToHtml = (done) ->
-  fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders }, (err, res) ->
+  fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, fullname: project_name }, (err, res) ->
 
     mapFiles = (folder) ->
-      targetfolder = path.join target_dir, folder.name
+      targetfolder = path.join target_dir, folder.fullname
 
       isFirstFileInFolder = true
       rootFiles = folder.files
@@ -82,7 +82,7 @@ convertSourceToHtml = (done) ->
 
     Seq(mappedFiles)
       .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
-      .parEach((x) ->
+      .seqEach((x) ->
         htmlify x.sourcepath, x.targetpath, (err, res) =>
           process.stdout.write "."
           this(err, mappedFiles)
@@ -101,7 +101,7 @@ readHtmlFiles = (done) ->
     .seq((res) -> process.stdout.write " OK"; this(null, res))
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
-    .parMap((x) ->
+    .seqMap((x) ->
       extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, (err, res) =>
         process.stdout.write "."
         this(err, res)
