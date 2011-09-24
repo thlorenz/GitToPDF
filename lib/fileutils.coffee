@@ -45,15 +45,16 @@ isFile = (path, callback) ->
 collectFilesAndFolders = (fullPath, config, callback) ->
   ctx = { }
 
-  includedExts = config?.includedExts or []
+  ignoredExts = config?.ignoredExts or []
   ignoredFiles = config?.ignoredFiles or []
   ignoredFolders = config?.ignoredFolders or []
 
   getFullPath = (x) -> path.join fullPath, x
 
   matchesExts = (x) ->
-    _(includedExts).isEmpty() or
-    _(includedExts).include(path.extname x)
+    console.log "Ext: #{path.extname x} included in #{ignoredExts}"
+    _(ignoredExts).isEmpty() or
+    not _(ignoredExts).include(path.extname x)
 
   Seq()
     .seq(-> fs.readdir fullPath, this)
@@ -84,7 +85,7 @@ collectFilesAndFolders = (fullPath, config, callback) ->
 # config may contain:
 #   depth: folder depth
 #   name:  name to give to folder, by default last folder of full path is used
-#   includedExts: extensions of files to be included, by default all are included
+#   ignoredExts: extensions of files to be ignored, by default none are ignored
 #   ignoredFiles: files to be ignored, by default no files are ignored 
 #   ignoredFolders: folder to be ignored in the form of 'parent/child', by default no folder are ignored 
 getFoldersRec = (fullPath, config, done) ->
@@ -92,7 +93,7 @@ getFoldersRec = (fullPath, config, done) ->
   depth = config?.depth or 0
   name = config?.name or path.basename fullPath
   fullname = config?.fullname or fullPath
-  includedExts = config?.includedExts or []
+  ignoredExts = config?.ignoredExts or []
   ignoredFiles = config?.ignoredFiles or []
   ignoredFolders = config?.ignoredFolders or []
 
@@ -118,7 +119,7 @@ getFoldersRec = (fullPath, config, done) ->
             name: folder
             fullname: "#{fullname}/#{folder}"
             depth: depth + 1
-            includedExts
+            ignoredExts
             ignoredFiles
             ignoredFolders
           },

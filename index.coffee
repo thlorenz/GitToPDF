@@ -76,9 +76,10 @@ extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInF
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]
+ignoredExts = ['.sh']
 
 convertSourceToHtml = (done) ->
-  fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, fullname: project_name }, (err, res) ->
+  fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, res) ->
 
     mapFiles = (folder) ->
       targetfolder = path.join target_dir, folder.fullname
