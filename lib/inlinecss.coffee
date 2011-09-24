@@ -7,7 +7,8 @@ inlinecss = (input_file, rubyscriptdir, cb) ->
     if (err or stderr)
       console.log "Error: ", err
       console.log "Stderr: ", stderr
-      throw err
-    cb null, stdout
+      cb err, null
+    else
+      cb null, stdout
 
 module.exports = inlinecss

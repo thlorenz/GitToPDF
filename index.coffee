@@ -10,7 +10,7 @@ _ = require 'underscore'
 theme = "desert"
 
 results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/"
-source_dir = fu.cleanPath "~/dev/js/node/source/connect"
+source_dir = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
 
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
@@ -22,33 +22,59 @@ compareIgnoreCase = (a, b) ->
   if (au > bu) then return 1
   return -1
 
+cleanBody = (body) ->
+    lines = body.split '\n'
+    shortenedLines = lines.map((x) -> if (x.length > 200) then '' else x)
+    return shortenedLines.join '\n'
+
 htmlify = (full_source_path, full_target_path, callback) ->
-  args = "-c \"colo #{theme}\" -c \"TOhtml\" -c \"w #{full_target_path}\" -c \"qa!\" #{full_source_path}"
-  exec "mvim #{args}", callback
+  args = "
+    -U .conversionrc
+    -c \"TOhtml\"
+    -c \"w #{full_target_path}\"
+    -c \"qa!\" 
+    #{full_source_path}
+    "
+
+  exec "vim #{args}", callback
 
 extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInFolder, cb) ->
+
   inlinecss fullpath, './lib', (err, data) ->
     if err
-      console.log "Error", err
-      throw err
+      cb(null, null)
+      console.log "ExtractHtml - error encountered, returning"
+      return
 
     body_rx = ///
-      \<body(.|\r|\n)*?\>
-        ((.|\r|\n)+)
-      \</body\>
+                  \<body(.|\r|\n)*\>
+                    ((.|\r|\n)+)
+                  \</body\>
               ///
     match = body_rx.exec data
     body = match[0]
 
-    
     folderHeader = if isFirstFileInFolder
-      "<h#{depth}>#{foldername}</h#{depth}><span>(#{folderfullname})</span><br/><br/>"
+        """
+          <h#{depth}>#{foldername}</h#{depth}>
+          <span>(#{folderfullname})</span><br/><br/>
+        """
     else
       ''
-    cb null, { fullname: "#{folderfullname}/#{name}", depth, html: "#{folderHeader}<h#{depth + 1}>#{name}</h#{depth + 1}><span>(#{folderfullname})</span><br\>#{body}" }
+
+    cb null, {
+      fullname: "#{folderfullname}/#{name}",
+      depth,
+      html: """
+              <span>#{folderHeader}</span><br\>
+              <h#{depth + 1}>#{name}</h#{depth + 1}>
+              <span>(#{folderfullname})</span><br\>
+              #{body}
+            """
+    }
 
 
-ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore' ]
+ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]
 
 convertSourceToHtml = (done) ->
@@ -103,19 +129,36 @@ readHtmlFiles = (done) ->
     .flatten()
     .seqMap((x) ->
       extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, (err, res) =>
-        process.stdout.write "."
-        this(err, res)
+        if (err)
+          console.log "WARN: Unable to extract html from", x.targetpath
+          this(err, null)
+        else
+          process.stdout.write "."
+          this(err, res)
       )
     )
     .parEach((x) -> htmlDocs.push x; this())
     .seq(-> process.stdout.write " OK"; this())
     .seq(->
-      res = _(htmlDocs)
+      content = _(htmlDocs)
         .chain()
+        .filter((x) -> x != null)
         .sort(compareDocs)
         .pluck('html')
         .value()
-        .join('<br/><br/>')
+        .join('<br/>')
+
+      res = """
+              <!DOCTYPE html> 
+              <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us"> 
+              <head> 
+                <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+                <title>Generated with GitToPdf</title> 
+              </head>
+              <body>
+                #{content}
+              </body>
+            """
 
       fs.writeFile(path.join(target_dir, 'code.html'), res, this)
     )
