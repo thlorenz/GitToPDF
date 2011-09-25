@@ -57,7 +57,7 @@ inlineCssAndExtractBody = (fullpath, cb) ->
 
     cb null, body
 
-addHeader = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
+createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
 
   folderHeader = if isFirstFileInFolder
       """
@@ -76,13 +76,16 @@ addHeader = (name, depth, foldername, folderfullname, isFirstFileInFolder, body)
 
   { fullname: "#{folderfullname}/#{name}", depth, html }
 
-convertSourceToHtml = (done) ->
+
+collectFilesToConvert =(source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, callback) ->
+
   fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, res) ->
 
     mapFiles = (folder) ->
       targetfolder = path.join target_dir, folder.fullname
 
       isFirstFileInFolder = true
+
       rootFiles = folder.files
         .sort(compareIgnoreCase)
         .map (x) ->
@@ -102,6 +105,13 @@ convertSourceToHtml = (done) ->
       _(rootFiles.concat(subFiles)).flatten()
         
     mappedFiles = mapFiles res
+    
+    callback(null, mappedFiles)
+    
+
+writeHtmlFilesFromSourceFiles = (callback) ->
+
+  collectFilesToConvert source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, mappedFiles) ->
 
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
@@ -118,7 +128,9 @@ convertSourceToHtml = (done) ->
           process.stdout.write "."
           this(err, mappedFiles)
       )
-      .seq((x) -> done(null, mappedFiles))
+      .seq((x) -> callback(null, mappedFiles))
+
+#convertToHtmlDocs
 
 readHtmlFiles = (done) ->
   htmlDocs = []
@@ -128,7 +140,7 @@ readHtmlFiles = (done) ->
     if (a.depth > b.depth) then return 1 else return -1
 
   Seq()
-    .seq(-> convertSourceToHtml this)
+    .seq(-> writeHtmlFilesFromSourceFiles this)
     .seq((res) -> process.stdout.write " OK"; this(null, res))
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
@@ -138,7 +150,7 @@ readHtmlFiles = (done) ->
           console.log "WARN: Unable to extract html from", x.targetpath
           this(err, null)
         else
-          htmlDoc = addHeader(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
+          htmlDoc = createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
           process.stdout.write "."
           
           this(err, htmlDoc)
