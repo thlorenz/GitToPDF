@@ -22,6 +22,8 @@ source_dir = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
 
+config = { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }
+
 compareIgnoreCase = (a, b) ->
   au = a.toUpperCase()
   bu = b.toUpperCase()
@@ -77,9 +79,9 @@ createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, b
   { fullname: "#{folderfullname}/#{name}", depth, html }
 
 
-collectFilesToConvert =(source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, callback) ->
+collectFilesToConvert =(source_dir, config, callback) ->
 
-  fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, res) ->
+  fu.getFoldersRec source_dir, config, (err, res) ->
 
     mapFiles = (folder) ->
       targetfolder = path.join target_dir, folder.fullname
@@ -109,9 +111,9 @@ collectFilesToConvert =(source_dir, { ignoredFiles, ignoredFolders, ignoredExts,
     callback(null, mappedFiles)
     
 
-writeHtmlFilesFromSourceFiles = (callback) ->
+writeHtmlFilesFromSourceFiles = (source_dir, config, callback) ->
 
-  collectFilesToConvert source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, mappedFiles) ->
+  collectFilesToConvert source_dir, config, (err, mappedFiles) ->
 
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
@@ -130,17 +132,12 @@ writeHtmlFilesFromSourceFiles = (callback) ->
       )
       .seq((x) -> callback(null, mappedFiles))
 
-#convertToHtmlDocs
+convertToHtmlDocs = (sourceFolder, config, callback) ->
 
-readHtmlFiles = (done) ->
   htmlDocs = []
-    
-  compareDocs = (a, b) ->
-    if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
-    if (a.depth > b.depth) then return 1 else return -1
 
   Seq()
-    .seq(-> writeHtmlFilesFromSourceFiles this)
+    .seq(-> writeHtmlFilesFromSourceFiles sourceFolder, config, this)
     .seq((res) -> process.stdout.write " OK"; this(null, res))
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
@@ -150,15 +147,27 @@ readHtmlFiles = (done) ->
           console.log "WARN: Unable to extract html from", x.targetpath
           this(err, null)
         else
-          htmlDoc = createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
+          htmlDoc = config.createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
           process.stdout.write "."
           
           this(err, htmlDoc)
       )
     )
     .parEach((x) -> htmlDocs.push x; this())
-    .seq(-> process.stdout.write " OK"; this())
-    .seq(->
+    .seq(-> callback(null, htmlDocs))
+
+readHtmlFiles = (done) ->
+    
+  compareDocs = (a, b) ->
+    if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
+    if (a.depth > b.depth) then return 1 else return -1
+
+  config.createHtmlDoc = createHtmlDoc
+
+  Seq()
+    .seq(-> convertToHtmlDocs(source_dir, config, this))
+    .seq((htmlDocs) -> process.stdout.write " OK"; this(null, htmlDocs))
+    .seq((htmlDocs) ->
       content = _(htmlDocs)
         .chain()
         .filter((x) -> x != null)
