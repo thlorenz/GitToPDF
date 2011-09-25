@@ -2,7 +2,6 @@ path = require 'path'
 fs = require 'fs'
 fu = require './fileutils.coffee'
 temp = require './temp.coffee'
-Seq = require 'Seq'
 _ = require 'underscore'
 
 wrapInsert = "\n⋄⋄⋄"
@@ -34,46 +33,31 @@ wrapLine = (line, columns) ->
 wrapFile = (fullPath, columns, callback) ->
 
   wrapFileContent = (data) ->
-      data
-        .toString()
-        .split('\n')
-        .map((x) -> wrapLine x, columns)
+    data
+      .toString()
+      .split('\n')
+      .map((x) -> wrapLine x, columns)
 
   # Writes Content to tempfile and returns its full path
   writeToTempFile = (extension, content, callback) ->
-    Seq()
-      .seq(-> temp.open({ suffix: extension }, this))
-      .seq((info) ->
-        fs.write info.fd, content
-        fs.close info.fd, (err) -> callback(err, info.path)
-      )
+    temp.open { suffix: extension }, (err, info) ->
+      fs.write info.fd, content
+      fs.close info.fd, (err) -> callback(err, info.path)
   
-  Seq()
-    .seq(-> fs.readFile fullPath, this)
-    .seq((data) ->
-      lines = wrapFileContent data
-      
-      contentChanged = _(lines).any((x) -> x.changed)
-      if (contentChanged)
-        extension = path.extname fullPath
-        content = lines
-          .map((x) -> x.line)
-          .join('\n')
+  fs.readFile fullPath, (err, data) ->
 
-        writeToTempFile(extension, content, callback)
-      else
-        # We can use the original file
-        this(null, fullPath)
-    )
-    .seq((res)-> callback(null, res))
+    lines = wrapFileContent data
+    contentChanged = _(lines).any((x) -> x.changed)
 
-module.exports = { wrapInsert, wrapLine }
+    if (contentChanged)
+      extension = path.extname fullPath
+      content = lines
+        .map((x) -> x.line)
+        .join('\n')
 
-# Scripting to test things
+      writeToTempFile(extension, content, callback)
+    else
+      # Use the original file as is
+      callback(null, fullPath)
 
-fullpath = fu.cleanPath "~/dev/js/node/sourcetopdf/test/inlinecss.coffee"
-wrapFile fullpath, 50,(err, path) ->
-  fs.readFile path, (err, data) -> console.log "Result", data.toString()
-  console.log "\nDONE"
-
-
+module.exports = { wrapInsert, wrapLine, wrapFile }
