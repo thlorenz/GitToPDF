@@ -17,7 +17,7 @@ ignoredFolders = [ '.git', 'node_modules', 'reading' ]
 ignoredExts = ['.sh']
 
 results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/"
-source_dir = fu.cleanPath "~/dev/js/node/source/connect"
+source_dir = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
 
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
@@ -29,20 +29,17 @@ compareIgnoreCase = (a, b) ->
   if (au > bu) then return 1
   return -1
 
-htmlify = (full_source_path, full_target_path, callback) ->
+pipeThruVimAndWriteHtml = (full_source_path, full_target_path, callback) ->
+  args = "
+    -U .conversionrc
+    -c \"set columns=#{columns}\"
+    -c \"TOhtml\"
+    -c \"w #{full_target_path}\"
+    -c \"qa!\" 
+    "
+  exec "mvim #{args} #{full_source_path}", callback
 
-  # Wrap lines in this file if needed, otherwise this will just return the original file
-  wrapper.wrapFile full_source_path, columns, (err, fullpath) ->
-    args = "
-      -U .conversionrc
-      -c \"set columns=#{columns}\"
-      -c \"TOhtml\"
-      -c \"w #{full_target_path}\"
-      -c \"qa!\" 
-      "
-    exec "mvim #{args} #{fullpath}", callback
-
-extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInFolder, cb) ->
+inlineCssAndExtractBody = (fullpath, cb) ->
 
   inlinecss fullpath, './lib', (err, data) ->
     if err
@@ -58,25 +55,26 @@ extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInF
     match = body_rx.exec data
     body = match[0]
 
-    folderHeader = if isFirstFileInFolder
-        """
-          <h#{depth}>#{foldername}</h#{depth}>
-          <span>(#{folderfullname})</span><br/><br/>
-        """
-    else
-      ''
+    cb null, body
 
-    cb null, {
-      fullname: "#{folderfullname}/#{name}",
-      depth,
-      html: """
-              <span>#{folderHeader}</span><br\>
-              <h#{depth + 1}>#{name}</h#{depth + 1}>
-              <span>(#{folderfullname})</span><br\>
-              #{body}
-            """
-    }
+addHeader = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
 
+  folderHeader = if isFirstFileInFolder
+      """
+        <h#{depth}>#{foldername}</h#{depth}>
+        <span>(#{folderfullname})</span><br/><br/>
+      """
+  else
+    ''
+  html =
+    """
+      <span>#{folderHeader}</span><br\>
+      <h#{depth + 1}>#{name}</h#{depth + 1}>
+      <span>(#{folderfullname})</span><br\>
+      #{body}
+    """
+
+  { fullname: "#{folderfullname}/#{name}", depth, html }
 
 convertSourceToHtml = (done) ->
   fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, res) ->
@@ -107,11 +105,16 @@ convertSourceToHtml = (done) ->
 
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
-    columns = 100
     Seq(mappedFiles)
       .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
       .seqEach((x) ->
-        htmlify x.sourcepath, x.targetpath, (err, res) =>
+        # Wrap lines in this file if needed, otherwise this will just return the original file
+        wrapper.wrapFile x.sourcepath, columns, (err, fullpath) =>
+          x.sourcepath = fullpath
+          this(null, x)
+      )
+      .seqEach((x) ->
+        pipeThruVimAndWriteHtml x.sourcepath, x.targetpath, (err, res) =>
           process.stdout.write "."
           this(err, mappedFiles)
       )
@@ -130,13 +133,15 @@ readHtmlFiles = (done) ->
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
     .seqMap((x) ->
-      extractHtml(x.targetpath, x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, (err, res) =>
+      inlineCssAndExtractBody(x.targetpath, (err, body) =>
         if (err)
           console.log "WARN: Unable to extract html from", x.targetpath
           this(err, null)
         else
+          htmlDoc = addHeader(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
           process.stdout.write "."
-          this(err, res)
+          
+          this(err, htmlDoc)
       )
     )
     .parEach((x) -> htmlDocs.push x; this())
