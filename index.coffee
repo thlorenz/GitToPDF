@@ -28,15 +28,20 @@ cleanBody = (body) ->
     return shortenedLines.join '\n'
 
 htmlify = (full_source_path, full_target_path, callback) ->
-  args = "
-    -U .conversionrc
-    -c \"TOhtml\"
-    -c \"w #{full_target_path}\"
-    -c \"qa!\" 
-    #{full_source_path}
-    "
+  fs.readFile full_source_path, (err, data) ->
+    console.log "Res", data.toString()
+    content = data.toString()
+    args = "
+      -
+      -U .conversionrc
+      -c \"TOhtml\"
+      -c \"w #{full_target_path}\"
+      -c \"qa!\" 
+      "
+    args = '-'
 
-  exec "vim #{args}", callback
+    exec "echo \"#{content}\""
+    exec "echo \"#{content}\" | mvim #{args}", callback
 
 extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInFolder, cb) ->
 

@@ -52,7 +52,6 @@ collectFilesAndFolders = (fullPath, config, callback) ->
   getFullPath = (x) -> path.join fullPath, x
 
   matchesExts = (x) ->
-    console.log "Ext: #{path.extname x} included in #{ignoredExts}"
     _(ignoredExts).isEmpty() or
     not _(ignoredExts).include(path.extname x)
 
