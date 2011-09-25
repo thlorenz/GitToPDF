@@ -2,16 +2,22 @@ sys = require 'sys'
 fs = require 'fs'
 path = require 'path'
 exec = require('child_process').exec
-fu = require './lib/fileutils'
-wrapper = require './lib/wrapper'
-inlinecss = require './lib/inlinecss.coffee'
+
 Seq = require 'seq'
 _ = require 'underscore'
 
-theme = "desert"
+fu = require './lib/fileutils'
+inlinecss = require './lib/inlinecss.coffee'
+wrapper = require './lib/wrapper'
+
+columns = 70
+
+ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
+ignoredFolders = [ '.git', 'node_modules', 'reading' ]
+ignoredExts = ['.sh']
 
 results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/"
-source_dir = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
+source_dir = fu.cleanPath "~/dev/js/node/source/connect"
 
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
@@ -23,18 +29,13 @@ compareIgnoreCase = (a, b) ->
   if (au > bu) then return 1
   return -1
 
-cleanBody = (body) ->
-    lines = body.split '\n'
-    shortenedLines = lines.map((x) -> if (x.length > 200) then '' else x)
-    return shortenedLines.join '\n'
-
 htmlify = (full_source_path, full_target_path, callback) ->
-  columns = 40
 
   # Wrap lines in this file if needed, otherwise this will just return the original file
   wrapper.wrapFile full_source_path, columns, (err, fullpath) ->
     args = "
       -U .conversionrc
+      -c \"set columns=#{columns}\"
       -c \"TOhtml\"
       -c \"w #{full_target_path}\"
       -c \"qa!\" 
@@ -76,10 +77,6 @@ extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInF
             """
     }
 
-
-ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
-ignoredFolders = [ '.git', 'node_modules', 'reading' ]
-ignoredExts = ['.sh']
 
 convertSourceToHtml = (done) ->
   fu.getFoldersRec source_dir, { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }, (err, res) ->

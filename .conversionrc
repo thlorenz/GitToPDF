@@ -1,3 +1,2 @@
-colo vibrantink
-set gfn=Monaco:h12
-set textwidth=137
+colo desert
+set gfn=Courier:h12
