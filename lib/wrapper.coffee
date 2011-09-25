@@ -4,7 +4,7 @@ fu = require './fileutils.coffee'
 temp = require './temp.coffee'
 _ = require 'underscore'
 
-wrapInsert = "\n⋄⋄⋄"
+wrapInsert = "\n⋄⋄⋄⋄⋄⋄ "
 
 wrapLine = (line, columns) ->
   

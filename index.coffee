@@ -3,6 +3,7 @@ fs = require 'fs'
 path = require 'path'
 exec = require('child_process').exec
 fu = require './lib/fileutils'
+wrapper = require './lib/wrapper'
 inlinecss = require './lib/inlinecss.coffee'
 Seq = require 'seq'
 _ = require 'underscore'
@@ -28,20 +29,17 @@ cleanBody = (body) ->
     return shortenedLines.join '\n'
 
 htmlify = (full_source_path, full_target_path, callback) ->
-  fs.readFile full_source_path, (err, data) ->
-    console.log "Res", data.toString()
-    content = data.toString()
+  columns = 40
+
+  # Wrap lines in this file if needed, otherwise this will just return the original file
+  wrapper.wrapFile full_source_path, columns, (err, fullpath) ->
     args = "
-      -
       -U .conversionrc
       -c \"TOhtml\"
       -c \"w #{full_target_path}\"
       -c \"qa!\" 
       "
-    args = '-'
-
-    exec "echo \"#{content}\""
-    exec "echo \"#{content}\" | mvim #{args}", callback
+    exec "mvim #{args} #{fullpath}", callback
 
 extractHtml = (fullpath, name, depth, foldername, folderfullname, isFirstFileInFolder, cb) ->
 
@@ -112,6 +110,7 @@ convertSourceToHtml = (done) ->
 
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
+    columns = 100
     Seq(mappedFiles)
       .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
       .seqEach((x) ->
