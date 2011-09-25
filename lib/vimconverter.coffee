@@ -1,14 +1,10 @@
-sys = require 'sys'
-fs = require 'fs'
-path = require 'path'
 exec = require('child_process').exec
-
 Seq = require 'seq'
-_ = require 'underscore'
 
 fu = require './fileutils'
 inlinecss = require './inlinecss.coffee'
 wrapper = require './wrapper'
+coreConverter = require './coreConverter.coffee'
 
 pipeThruVimAndWriteHtml = (full_source_path, full_target_path, columns, callback) ->
   args = "
@@ -38,16 +34,16 @@ inlineCssAndExtractBody = (fullpath, cb) ->
 
     cb null, body
 
-writeHtmlFilesFromSourceFiles = (source_dir, config, callback) ->
+writeHtmlFilesFromSourceFiles = (config, callback) ->
 
-  config.collectFilesToConvert source_dir, config, (err, mappedFiles) ->
+  coreConverter.collectFilesToConvert config, (err, mappedFiles) ->
 
     process.stdout.write "Converting #{mappedFiles.length} files to html: "
 
     Seq(mappedFiles)
       .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
       .seqEach((x) ->
-        # Wrap lines in this file if needed, otherwise this will just return the original file
+        # Wrap lines in this file if needed, otherwise this will just return the original file path
         wrapper.wrapFile x.sourcepath, config.columns, (err, fullpath) =>
           x.sourcepath = fullpath
           this(null, x)
@@ -59,12 +55,12 @@ writeHtmlFilesFromSourceFiles = (source_dir, config, callback) ->
       )
       .seq((x) -> callback(null, mappedFiles))
 
-convertToHtmlDocs = (sourceFolder, config, callback) ->
+convertToHtmlDocs = (config, callback) ->
 
   htmlDocs = []
 
   Seq()
-    .seq(-> writeHtmlFilesFromSourceFiles sourceFolder, config, this)
+    .seq(-> writeHtmlFilesFromSourceFiles config, this)
     .seq((res) -> process.stdout.write " OK"; this(null, res))
     .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
     .flatten()
@@ -74,7 +70,7 @@ convertToHtmlDocs = (sourceFolder, config, callback) ->
           console.log "WARN: Unable to extract html from", x.targetpath
           this(err, null)
         else
-          htmlDoc = config.createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
+          htmlDoc = coreConverter.createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
           process.stdout.write "."
           
           this(err, htmlDoc)
