@@ -10,6 +10,9 @@ fu = require './lib/fileutils'
 inlinecss = require './lib/inlinecss.coffee'
 wrapper = require './lib/wrapper'
 
+converter = require './lib/vimconverter.coffee'
+
+
 columns = 70
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
@@ -22,7 +25,7 @@ source_dir = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
 project_name = source_dir.split('/').pop()
 target_dir = results_dir
 
-config = { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name }
+config = { ignoredFiles, ignoredFolders, ignoredExts, fullname: project_name, columns }
 
 compareIgnoreCase = (a, b) ->
   au = a.toUpperCase()
@@ -31,55 +34,7 @@ compareIgnoreCase = (a, b) ->
   if (au > bu) then return 1
   return -1
 
-pipeThruVimAndWriteHtml = (full_source_path, full_target_path, callback) ->
-  args = "
-    -U .conversionrc
-    -c \"set columns=#{columns}\"
-    -c \"TOhtml\"
-    -c \"w #{full_target_path}\"
-    -c \"qa!\" 
-    "
-  exec "mvim #{args} #{full_source_path}", callback
-
-inlineCssAndExtractBody = (fullpath, cb) ->
-
-  inlinecss fullpath, './lib', (err, data) ->
-    if err
-      cb(null, null)
-      console.log "ExtractHtml - error encountered, returning"
-      return
-
-    body_rx = ///
-                  \<body(.|\r|\n)*\>
-                    ((.|\r|\n)+)
-                  \</body\>
-              ///
-    match = body_rx.exec data
-    body = match[0]
-
-    cb null, body
-
-createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
-
-  folderHeader = if isFirstFileInFolder
-      """
-        <h#{depth}>#{foldername}</h#{depth}>
-        <span>(#{folderfullname})</span><br/><br/>
-      """
-  else
-    ''
-  html =
-    """
-      <span>#{folderHeader}</span><br\>
-      <h#{depth + 1}>#{name}</h#{depth + 1}>
-      <span>(#{folderfullname})</span><br\>
-      #{body}
-    """
-
-  { fullname: "#{folderfullname}/#{name}", depth, html }
-
-
-collectFilesToConvert =(source_dir, config, callback) ->
+collectFilesToConvert = (source_dir, config, callback) ->
 
   fu.getFoldersRec source_dir, config, (err, res) ->
 
@@ -111,86 +66,53 @@ collectFilesToConvert =(source_dir, config, callback) ->
     callback(null, mappedFiles)
     
 
-writeHtmlFilesFromSourceFiles = (source_dir, config, callback) ->
+createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
 
-  collectFilesToConvert source_dir, config, (err, mappedFiles) ->
+  folderHeader = if isFirstFileInFolder
+      """
+        <h#{depth}>#{foldername}</h#{depth}>
+        <span>(#{folderfullname})</span><br/><br/>
+      """
+  else
+    ''
 
-    process.stdout.write "Converting #{mappedFiles.length} files to html: "
+  html =
+    """
+      <span>#{folderHeader}</span><br\>
+      <h#{depth + 1}>#{name}</h#{depth + 1}>
+      <span>(#{folderfullname})</span><br\>
+      #{body}
+    """
 
-    Seq(mappedFiles)
-      .seqEach((x) -> fu.createFolder x.targetfolder, (err) => this(err, x))
-      .seqEach((x) ->
-        # Wrap lines in this file if needed, otherwise this will just return the original file
-        wrapper.wrapFile x.sourcepath, columns, (err, fullpath) =>
-          x.sourcepath = fullpath
-          this(null, x)
-      )
-      .seqEach((x) ->
-        pipeThruVimAndWriteHtml x.sourcepath, x.targetpath, (err, res) =>
-          process.stdout.write "."
-          this(err, mappedFiles)
-      )
-      .seq((x) -> callback(null, mappedFiles))
+  { fullname: "#{folderfullname}/#{name}", depth, html }
 
-convertToHtmlDocs = (sourceFolder, config, callback) ->
-
-  htmlDocs = []
-
-  Seq()
-    .seq(-> writeHtmlFilesFromSourceFiles sourceFolder, config, this)
-    .seq((res) -> process.stdout.write " OK"; this(null, res))
-    .seq((res) -> process.stdout.write "\nProcessing html: "; this(null, res))
-    .flatten()
-    .seqMap((x) ->
-      inlineCssAndExtractBody(x.targetpath, (err, body) =>
-        if (err)
-          console.log "WARN: Unable to extract html from", x.targetpath
-          this(err, null)
-        else
-          htmlDoc = config.createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
-          process.stdout.write "."
-          
-          this(err, htmlDoc)
-      )
-    )
-    .parEach((x) -> htmlDocs.push x; this())
-    .seq(-> callback(null, htmlDocs))
-
-readHtmlFiles = (done) ->
-    
+createHtmlContent = (htmlDocs) ->
   compareDocs = (a, b) ->
     if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
     if (a.depth > b.depth) then return 1 else return -1
 
+  _(htmlDocs)
+    .chain()
+    .filter((x) -> x != null)
+    .sort(compareDocs)
+    .pluck('html')
+    .value()
+    .join('<br/>')
+
+
+convertToHtmlPage = (sourceFolder, callback) ->
+    
+  config.collectFilesToConvert = collectFilesToConvert
   config.createHtmlDoc = createHtmlDoc
 
   Seq()
-    .seq(-> convertToHtmlDocs(source_dir, config, this))
-    .seq((htmlDocs) -> process.stdout.write " OK"; this(null, htmlDocs))
+    .seq(-> converter.convertToHtmlDocs(sourceFolder, config, this))
     .seq((htmlDocs) ->
-      content = _(htmlDocs)
-        .chain()
-        .filter((x) -> x != null)
-        .sort(compareDocs)
-        .pluck('html')
-        .value()
-        .join('<br/>')
-
-      res = """
-              <!DOCTYPE html> 
-              <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us"> 
-              <head> 
-                <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
-                <title>Generated with GitToPdf</title> 
-              </head>
-              <body>
-                #{content}
-              </body>
-            """
-
-      fs.writeFile(path.join(target_dir, 'code.html'), res, this)
+      content = createHtmlContent htmlDocs
+      page = converter.createHtmlPage content
+      fs.writeFile(path.join(target_dir, 'code.html'), page, this)
     )
-    .seq(-> done(null, null))
+    .seq(-> callback(null, null))
     .catch((err) -> console.log "Error: ", err)
 
-readHtmlFiles( -> console.log "\nEverything OK")
+convertToHtmlPage(source_dir, -> console.log "\nEverything OK")
