@@ -30,13 +30,21 @@ wrapLine = (line, columns) ->
 
     { line: (lineParts.join wrapInsert), changed: true }
     
-wrapFile = (fullPath, columns, callback) ->
+wrapContent = (content, columns) ->
+  lines = content
+    .split('\n')
+    .map((x) -> wrapLine x, columns)
 
-  wrapFileContent = (data) ->
-    data
-      .toString()
-      .split('\n')
-      .map((x) -> wrapLine x, columns)
+  changed = _(lines).any((x) -> x.changed)
+
+  if changed
+    content = lines
+      .map((x) -> x.line)
+      .join('\n')
+
+  { changed, content }
+
+wrapFile = (fullPath, columns, callback) ->
 
   # Writes Content to tempfile and returns its full path
   writeToTempFile = (extension, content, callback) ->
@@ -46,18 +54,13 @@ wrapFile = (fullPath, columns, callback) ->
   
   fs.readFile fullPath, (err, data) ->
 
-    lines = wrapFileContent data
-    contentChanged = _(lines).any((x) -> x.changed)
+    wrap = wrapContent(data.toString(), columns)
 
-    if (contentChanged)
+    if (wrap.changed)
       extension = path.extname fullPath
-      content = lines
-        .map((x) -> x.line)
-        .join('\n')
-
-      writeToTempFile(extension, content, callback)
+      writeToTempFile(extension, wrap.content, callback)
     else
       # Use the original file as is
       callback(null, fullPath)
 
-module.exports = { wrapInsert, wrapLine, wrapFile }
+module.exports = { wrapInsert, wrapLine, wrapContent, wrapFile }
