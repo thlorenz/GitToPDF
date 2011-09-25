@@ -3,14 +3,20 @@ path = require 'path'
 Seq = require 'seq'
 _ = require 'underscore'
 
-class Folder
-  constructor: (@name, @fullname, @fullPath, @depth, @files, @folders) ->
 
-# Replaces ~ with the environments Home path
+# Replaces problematic characters in path
 cleanPath = (path) ->
   if (path.indexOf '~') is 0
-    return process.env.HOME + path.substr(1)
+    path = process.env.HOME + path.substr(1)
+  
+  # Escape all spaces
+  path = path.replace(///\s///g, '\\ ')
+
   return path
+
+class Folder
+  constructor: (@name, @fullname, @fullPath, @depth, @files, @folders) ->
+    @fullPath = cleanPath @fullPath
 
 # Creates a folder for the given full path unless it exists already
 createFolder = (full_path, callback) ->
