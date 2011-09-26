@@ -15,12 +15,12 @@ converter =
 
 columns = 80
 
-ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.ds_store', 'test.pdf', 'inlined.html' ]
-ignoredFolders = [ '.git', 'node_modules', 'reading' ]
+ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_STORE', 'test.pdf', 'inlined.html' ]
+ignoredFolders = [ '.git', 'reading' ] # 'node_modules',
 ignoredExts = ['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.md', '.ico']
 
 results_dir = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
-sourceFolder = fu.cleanPath "~/dev/js/node/source/connect"
+sourceFolder = fu.cleanPath "~/dev/js/node/sourcetopdf/node_modules/seq"
 
 project_name = sourceFolder.split('/').pop()
 targetFolder = results_dir

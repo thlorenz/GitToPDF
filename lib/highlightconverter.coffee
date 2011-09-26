@@ -12,11 +12,26 @@ createHtmlPage = (content, config) ->
 
 convertToHtmlDocs = (config, callback) ->
 
+  getBrush = (extension) ->
+
+    # Map similar syntaxes to known ones
+    map =
+      'json'    : 'js'
+      'coffee'  : 'python'
+      'txt'     : 'text'
+      'md'      : 'text'
+      'markdown': 'text'
+      'key'     : 'text'
+
+
+    brush = extension.substr 1
+    brush = map[brush] or brush
+
   contentToHtmlDoc = (x) ->
 
     wrapped = wrapper.wrapContent x.code, config.columns
-
-    brush = x.info.extension.substr 1
+    
+    brush = getBrush x.info.extension
 
     body = highlight.codeToHtml(brush, wrapped.content)
 
