@@ -58,9 +58,9 @@ createHtmlDoc = (name, extension, depth, foldername, folderfullname, isFirstFile
 
   html =
     """
-      <span>#{folderHeader}</span><br\>
+      <span>#{folderHeader}</span><br/>
       <h#{depth + 1}>#{name}</h#{depth + 1}>
-      <span>(#{folderfullname})</span><br\>
+      <span>(#{folderfullname})</span><br/>
       #{body}
     """
 

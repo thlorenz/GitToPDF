@@ -31,7 +31,7 @@ htmlTemplate =
         'groovy					{ROOT}/scripts/shBrushGroovy.js',
         'java	jar				{ROOT}/scripts/shBrushJava.js',
         'jfx javafx				{ROOT}/scripts/shBrushJavaFX.js',
-        'js jscript javascript	{ROOT}/scripts/shBrushJScript.js',
+        'js json jscript javascript	{ROOT}/scripts/shBrushJScript.js',
         'perl pl				{ROOT}/scripts/shBrushPerl.js',
         'php					{ROOT}/scripts/shBrushPhp.js',
         'text plain txt				{ROOT}/scripts/shBrushPlain.js',

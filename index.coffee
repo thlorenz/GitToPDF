@@ -13,14 +13,14 @@ converter =
   else
     require './lib/highlightconverter.coffee'
 
-columns = 70
+columns = 120
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.ds_store', 'test.pdf', 'inlined.html' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]
-ignoredExts = ['.sh']
+ignoredExts = ['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.md', '.ico']
 
 results_dir = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
-sourceFolder = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
+sourceFolder = fu.cleanPath "~/dev/js/node/source/connect"
 
 project_name = sourceFolder.split('/').pop()
 targetFolder = results_dir

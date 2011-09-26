@@ -42,9 +42,10 @@ convertToHtmlDocs = (config, callback) ->
       htmlDoc = contentToHtmlDoc res
       
       htmlDocs.push htmlDoc
-      callback(null, htmlDocs)
+      process.stdout.write "."
+      this(null, htmlDocs)
     )
-    .seq((docs) -> callback(null, docs))
+    .seq((docs) -> callback(null, htmlDocs))
 
 module.exports = { convertToHtmlDocs, createHtmlPage }
 
