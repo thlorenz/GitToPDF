@@ -13,7 +13,7 @@ converter =
   else
     require './lib/highlightconverter.coffee'
 
-columns = 120
+columns = 80
 
 ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.ds_store', 'test.pdf', 'inlined.html' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]

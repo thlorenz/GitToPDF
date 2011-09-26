@@ -9,7 +9,7 @@ htmlTemplate =
     <script type="text/javascript" src="{ROOT}/scripts/shCore.js"></script>
     <script type="text/javascript" src="{ROOT}/scripts/shAutoloader.js"></script>
     <link type="text/css" rel="stylesheet" href="{ROOT}/styles/shCore.css"/>
-    <link type="text/css" rel="Stylesheet" href="{ROOT}/styles/shThemeDefault.css" />
+    <link type="text/css" rel="Stylesheet" href="{ROOT}/styles/{THEME}.css" />
   </head>
 
   <body>
@@ -61,10 +61,11 @@ codeToHtml = (brush, code) ->
     .replace(///{BRUSH}///, brush)
     .replace(///{CODE}///, code)
 
-highlightHtml = (root, codeHtml) ->
+highlightHtml = (root, codeHtml, theme = "shThemeDefault") ->
   htmlTemplate
     .replace(///{ROOT}///g, root)
     .replace(///{CONTENT}///, codeHtml)
+    .replace(///{THEME}///, theme)
 
 module.exports = { codeToHtml, highlightHtml }
 

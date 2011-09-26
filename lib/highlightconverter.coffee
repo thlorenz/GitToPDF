@@ -14,7 +14,7 @@ convertToHtmlDocs = (config, callback) ->
 
   contentToHtmlDoc = (x) ->
 
-    wrapped = wrapper.wrapContent x.code, config
+    wrapped = wrapper.wrapContent x.code, config.columns
 
     brush = x.info.extension.substr 1
 
