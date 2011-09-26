@@ -5,15 +5,21 @@ Seq = require 'Seq'
 fu = require './lib/fileutils'
 coreConverter = require './lib/coreconverter.coffee'
 
-converter = require './lib/vimconverter.coffee'
+vim = false
+
+converter =
+  if vim
+    require './lib/vimconverter.coffee'
+  else
+    require './lib/highlightconverter.coffee'
 
 columns = 70
 
-ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.DS_Store', 'test.pdf', 'inlined.html' ]
+ignoredFiles = ['jquery-1.2.6.min.js', '.gitignore', '.npmignore', '.ds_store', 'test.pdf', 'inlined.html' ]
 ignoredFolders = [ '.git', 'node_modules', 'reading' ]
 ignoredExts = ['.sh']
 
-results_dir = "/Users/tlorenz/Dropboxes/Gmail/Dropbox/dev/javascript/node/gittopdf/"
+results_dir = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
 sourceFolder = fu.cleanPath "~/dev/js/node/sourcetopdf/test"
 
 project_name = sourceFolder.split('/').pop()

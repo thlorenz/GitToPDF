@@ -64,7 +64,7 @@ codeToHtml = (brush, code) ->
 highlightHtml = (root, codeHtml) ->
   htmlTemplate
     .replace(///{ROOT}///g, root)
-    .replace(///{CONTENT///, codeHtml)
+    .replace(///{CONTENT}///, codeHtml)
 
 module.exports = { codeToHtml, highlightHtml }
 

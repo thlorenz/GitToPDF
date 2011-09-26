@@ -70,7 +70,7 @@ convertToHtmlDocs = (config, callback) ->
           console.log "WARN: Unable to extract html from", x.targetpath
           this(err, null)
         else
-          htmlDoc = coreConverter.createHtmlDoc(x.name, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
+          htmlDoc = coreConverter.createHtmlDoc(x.name, x.extension, x.depth, x.foldername, x.folderfullname, x.isFirstFileInFolder, body)
           process.stdout.write "."
           
           this(err, htmlDoc)

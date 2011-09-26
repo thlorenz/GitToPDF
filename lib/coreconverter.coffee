@@ -30,6 +30,7 @@ collectFilesToConvert = (config, callback) ->
             foldername: folder.name
             folderfullname: folder.fullname
             name: x
+            extension: path.extname x
             sourcepath : path.join folder.fullPath, x
             targetpath : path.join targetfolder, x + '.html'
             targetfolder
@@ -45,7 +46,7 @@ collectFilesToConvert = (config, callback) ->
     callback(null, mappedFiles)
     
 
-createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
+createHtmlDoc = (name, extension, depth, foldername, folderfullname, isFirstFileInFolder, body) ->
 
   folderHeader = if isFirstFileInFolder
       """
@@ -63,7 +64,7 @@ createHtmlDoc = (name, depth, foldername, folderfullname, isFirstFileInFolder, b
       #{body}
     """
 
-  { fullname: "#{folderfullname}/#{name}", depth, html }
+  { fullname: "#{folderfullname}/#{name}", extension, depth, html }
 
 createHtmlContent = (htmlDocs) ->
   compareDocs = (a, b) ->
