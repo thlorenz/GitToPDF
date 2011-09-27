@@ -51,9 +51,7 @@ htmlTemplate =
 
 codeTemplate=
   """
-    <pre class="brush: {BRUSH};">
-    {CODE}
-    </pre>
+    <script type="syntaxhighlighter" class="brush: {BRUSH}"><![CDATA[{CODE}]]></script>
   """
 
 codeToHtml = (brush, code) ->

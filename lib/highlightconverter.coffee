@@ -18,6 +18,7 @@ convertToHtmlDocs = (config, callback) ->
     map =
       'json'    : 'js'
       'coffee'  : 'python'
+      'groovy'  : 'python'
       'txt'     : 'text'
       'md'      : 'text'
       'markdown': 'text'

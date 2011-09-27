@@ -20,7 +20,7 @@ ignoredFolders = [ '.git', 'reading' ] # 'node_modules',
 ignoredExts = ['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.md', '.ico']
 
 results_dir = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
-sourceFolder = fu.cleanPath "~/dev/js/node/sourcetopdf/node_modules/seq"
+sourceFolder = fu.cleanPath "~/dev/js/node/source/connect"
 
 project_name = sourceFolder.split('/').pop()
 targetFolder = results_dir
