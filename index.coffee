@@ -11,7 +11,7 @@ converter =
   if vim
     require './lib/vimconverter.coffee'
   else
-    require './lib/highlightconverter.coffee'
+    require './lib/gorbatchevconverter.coffee'
 
 columns = 80
 
@@ -20,7 +20,7 @@ ignoredFolders = [ '.git', 'reading' ] # 'node_modules',
 ignoredExts = ['.png', '.jpeg', '.jpg', '.gif', '.bmp', '.md', '.ico']
 
 results_dir = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
-sourceFolder = fu.cleanPath "~/dev/js/node/source/connect"
+sourceFolder = fu.cleanPath "~/dev/js/node/sourcetopdf/node_modules/seq"
 
 project_name = sourceFolder.split('/').pop()
 targetFolder = results_dir

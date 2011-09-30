@@ -4,7 +4,7 @@ Seq = require 'Seq'
 fu = require './fileutils'
 wrapper = require './wrapper'
 coreConverter = require './coreConverter.coffee'
-highlight = require './highlight.coffee'
+highlight = require './gorbatchevhelper.coffee'
 
 createHtmlPage = (content, config) ->
   root = fu.cleanPath "~/dev/js/node/sourcetopdf/lib/syntaxhighlighter"
