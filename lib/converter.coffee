@@ -2,16 +2,16 @@ fs = require 'fs'
 path = require 'path'
 Seq = require 'Seq'
 
-fu = require './lib/fileutils'
-coreConverter = require './lib/coreconverter.coffee'
+fu = require './fileutils'
+coreConverter = require './coreconverter'
 
 vim = false
 
 converter =
   if vim
-    require './lib/vimconverter.coffee'
+    require './vimconverter'
   else
-    require './lib/gorbatchevconverter.coffee'
+    require './gorbatchevconverter'
 
 columns = 80
 
