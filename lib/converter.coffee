@@ -1,3 +1,5 @@
+#!/usr/bin/env coffee
+
 fs = require 'fs'
 path = require 'path'
 Seq = require 'Seq'
