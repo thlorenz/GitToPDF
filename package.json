@@ -8,8 +8,11 @@
         "url" : "http://github.com/thlorez/gittopdf.git"
     },
     "dependencies" : {
-        "seq": ">=0.3 <0.5",
-        "underscore": ">=1.1 <1.2"
+        "underscore"  : ">=1.1 <1.2",
+        "seq"         : ">=0.3 <0.5",
+        "express"     : ">=2.4 <3.0",
+        "jade"        : ">=0.16 <1.0",
+        "backbone"    : ">=0.5 <0.6"
     },
     "keywords" : [
       "source", "github", "iPad", "reading"

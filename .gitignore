@@ -1,7 +1,4 @@
 node_modules
-server*.js
-bootstrap.js
-.livereload
 .DS_Store
 code.html
 test
