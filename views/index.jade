@@ -1,0 +1,7 @@
+h= title
+p Give me the repo and I'll spit out the PDFified version color-coded and all ...
+
+p Git Repository
+form(action='/convert', method='get')
+  input(type='text', name='repo', results='5')
+  input.button(type='submit', value='Convert')
