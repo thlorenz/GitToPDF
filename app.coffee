@@ -11,8 +11,18 @@ getIndex = (req, res) ->
 
 getConvert = (req, res, query) ->
   console.log "getting converter"
-  res.writeHead 200, { 'Content-Type': 'text/plain' }
-  res.end "Converting: #{query}"
+  res.writeHead 200, { 'Content-Type': 'text/html' }
+  body =
+    """
+    <html>
+      <body>
+        <h1>Converting: <i> #{query}</i></h1>
+      </body>
+    </html>
+    """
+
+  res.write body
+  res.end()
 
 routes =
   '/'           : getIndex
@@ -31,8 +41,8 @@ server = http.createServer (req, res) ->
     routes[path](req, res, query)
   else
     console.log "cannot route", path
-    res.writeHead 400, { 'Content-Type': 'text/plain' }
-    res.end 'Not found'
+    res.writeHead 404, { 'Content-Type': 'text/plain' }
+    res.end '404 Not found'
 
 
 server.listen 3000, 'localhost'
