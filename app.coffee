@@ -1,51 +1,28 @@
 #!/usr/bin/env coffee
 
+fs = require 'fs'
 _ = require 'underscore'
-http = require 'http'
 url = require 'url'
+http = require 'http'
 
-getIndex = (req, res) ->
-  console.log "getting index"
-  res.writeHead 200, { 'Content-Type': 'text/plain' }
-  res.end 'Index'
+handler = (req, res) ->
+  fs.readFile "#{__dirname}/public/index.html",(err, data) ->
+    if err
+      console.log "Could not find index.html"
+      res.writeHead 500
+      return res.end 'Error loading index.html'
+    else
+      console.log "Serving index.html"
+      res.writeHead 200
+      res.end data
 
-getConvert = (req, res, query) ->
-  console.log "getting converter"
-  res.writeHead 200, { 'Content-Type': 'text/html' }
-  body =
-    """
-    <html>
-      <body>
-        <h1>Converting: <i> #{query}</i></h1>
-      </body>
-    </html>
-    """
+app = http.createServer(handler)
+io = require('socket.io').listen(app)
 
-  res.write body
-  res.end()
+app.listen 3000
+console.log "App listening on 3000"
 
-routes =
-  '/'           : getIndex
-  '/convert'    : getConvert
-  '/favicon.ico': (req, res) ->
-
-
-server = http.createServer (req, res) ->
-  uri = url.parse req.url
-  path = uri.pathname
-  query = uri.query
-  
-  console.log "uri", uri
-
-  if routes[path]
-    routes[path](req, res, query)
-  else
-    console.log "cannot route", path
-    res.writeHead 404, { 'Content-Type': 'text/plain' }
-    res.end '404 Not found'
-
-
-server.listen 3000, 'localhost'
-
-console.log 'Server running on localhost port 3000'
-
+io.sockets.on 'connection', (socket) ->
+  socket.emit 'update', { progess: 0 }
+  socket.on 'response', (data) ->
+    console.log "Client responded"

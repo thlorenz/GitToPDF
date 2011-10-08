@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-script-type" content="text/javascript"/>
+</head>
+<body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io.connect('http://localhost');
+    socket.on('update', function (data) {
+      console.log(data);
+      socket.emit('response', { my: 'data' });
+    });
+  </script>
+</body>
+</html>
