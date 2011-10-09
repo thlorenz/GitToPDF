@@ -10,7 +10,8 @@
     "dependencies" : {
         "underscore"  : ">=1.1",
         "seq"         : ">=0.3",
-        "socket.io"   : ">=0.8"
+        "socket.io"   : ">=0.8",
+        "colors"      : ">=0.5"
     },
     "keywords" : [
       "source", "github", "iPad", "reading"

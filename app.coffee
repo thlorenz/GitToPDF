@@ -4,25 +4,42 @@ fs = require 'fs'
 _ = require 'underscore'
 url = require 'url'
 http = require 'http'
+sys = require 'sys'
+colors = require 'colors'
+
+port = 3000
+log = (msg, params) -> console.log msg.blue, params or ""
 
 handler = (req, res) ->
-  fs.readFile "#{__dirname}/public/index.html",(err, data) ->
+  reqUrl = url.parse req.url
+  relPath = if reqUrl.pathname == "/" then "#{__dirname}/public/index.html" else "#{__dirname}#{reqUrl.pathname}"
+
+  fs.readFile relPath, (err, data) ->
     if err
-      console.log "Could not find index.html"
+      log "Could not find", relPath
       res.writeHead 500
-      return res.end 'Error loading index.html'
+      return res.end "Error loading #{relPath}"
     else
-      console.log "Serving index.html"
-      res.writeHead 200
+      log "Serving: ", relPath
+      contentType = "text/plain"
+
+      isHtml = relPath.search(".html$") > 0
+      isJavaScript = relPath.search(".js$") > 0
+
+      if isHtml then contentType = "text/html"
+      if isJavaScript then contentType = "text/javascript"
+
+      res.writeHead 200, { 'Content-Type': contentType }
       res.end data
+
 
 app = http.createServer(handler)
 io = require('socket.io').listen(app)
 
-app.listen 3000
-console.log "App listening on 3000"
+app.listen port
+log "App listening on", port
 
 io.sockets.on 'connection', (socket) ->
   socket.emit 'update', { progess: 0 }
   socket.on 'response', (data) ->
-    console.log "Client responded"
+    log "Client responded"

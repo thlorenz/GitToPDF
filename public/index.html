@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <meta http-equiv="content-script-type" content="text/javascript"/>
+    <meta http-equiv="content-script-type" content="text/javascript" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/public/javascripts/bootstrap.js"></script>
 </head>
 <body>
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    var socket = io.connect('http://localhost');
-    socket.on('update', function (data) {
-      console.log(data);
-      socket.emit('response', { my: 'data' });
-    });
-  </script>
+  <h1>Welcome to the GitToPdfifier!</h1>
 </body>
 </html>
