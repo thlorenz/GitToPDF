@@ -8,8 +8,8 @@ var util = require('util')
   , fs = require('fs')
   , spawn = require('child_process').spawn
   , child // child process which runs the actual code
-  , ignoreExtensions = ['.dirtydb', '.db', '.css']
-  , node = 'node' // switched out for coffee depending on extension.
+  , ignoreExtensions = ['.dirtydb', '.db', '.css', '.js']
+  , runner = 'node' // switched out for coffee depending on extension.
   ;
 
 if (process.argv.length !== 3) {
@@ -19,7 +19,8 @@ if (process.argv.length !== 3) {
   process.exit(1); // exit w/ an error code.
 }
 
-if (process.argv[2].match(/\.coffee$/)) node = 'coffee';
+if (process.argv[2].match(/\.coffee$/)) runner = 'coffee';
+if (process.argv[2].match(/\.sh$/)) runner = 'sh';
 
 run();
 watchFiles(parseFolder('.'), restart); // watch all files, restart if problem
@@ -30,7 +31,7 @@ process.stdin.setEncoding('utf8');
 // executes the command given by the second argument
 function run() {
   // run the server
-  child = spawn(node, [process.argv[2]]);
+  child = spawn(runner, [process.argv[2]]);
 
   // let the child's output escape.
   child.stdout.on('data', function(data) {

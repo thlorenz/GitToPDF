@@ -1,11 +1,8 @@
 (function() {
-  var log, socket;
-  log = function(msg, params) {
-    console.log(msg.blue, params || "");
-  };
+  var socket;
   socket = io.connect('http://localhost');
   socket.on('update', function(data) {
-    log("Data:", data);
+    console.log("Data:", data);
     return socket.emit('response', {
       my: 'data'
     });
