@@ -40,6 +40,14 @@ app.listen port
 log "App listening on", port
 
 io.sockets.on 'connection', (socket) ->
-  socket.emit 'update', { progess: 0 }
   socket.on 'response', (data) ->
     log "Client responded"
+
+  updateProgress = (percent, message) ->
+    socket.emit 'update', { percent, message }
+
+  percent = 0
+  setInterval ->
+    updateProgress percent, "starting to work"
+    percent += 2
+  , 500
