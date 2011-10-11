@@ -1,0 +1,25 @@
+div.terminal { 
+  background: black;
+  color: white;
+  padding: 1em 0.5em 1em 0.5em;
+  width: 1000px;
+  height: 500px;
+}
+
+span.terminal_prompt {
+  color: yellow
+}
+
+span.terminal_action {
+  color: white
+}
+
+span.terminal_success {
+  color: blue;
+  font-weight: bold;
+}
+
+span.terminal_failure {
+  color: red;
+  font-weight: bold;
+}

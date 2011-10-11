@@ -4,13 +4,24 @@
     <meta http-equiv="content-script-type" content="text/javascript" />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/public/javascripts/bootstrap.js"></script>
+    <script src="bootstrap.js"></script>
+    <link rel="stylesheet" href="style.css" type="text/css" media="all" />
 </head>
 <body>
   <h1>Welcome to the GitToPdfifier!</h1>
   <div>
-    <progress id="progressBar" max="100" value="20">
-    </progress>
+    <p>Please enter a repository url and press submit in order to convert it to a pdf file</p>
+    <span>Repository Url: </span>
+    <input type="textarea" id="convertInput" width="300"></input> 
+    <button type="button" id="convertButton">Convert</button> 
+  </div>
+  <div id="progressDiv" display="none">
+    <progress id="progressBar" max="100" value="0"></progress>
+    <div background="black" id="terminal" class="terminal">
+      <span class="terminal_prompt">supergit@gittopdfifier.com $</span>
+      <span class="terminal_action">git clone http://this.stuff</span>
+      <span class="terminal_success"> - Ok</span>
+    </div>
   </div>
 </body>
 </html>
