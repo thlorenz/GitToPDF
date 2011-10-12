@@ -8,6 +8,7 @@ http = require 'http'
 sys = require 'sys'
 path = require 'path'
 colors = require 'colors'
+Seq = require 'seq'
 temp = require './lib/temp'
 gitclone = require './lib/gitclone'
 
@@ -56,6 +57,7 @@ io = require('socket.io').listen(app)
 app.listen port
 log "App listening on", port
 
+
 io.sockets.on 'connection', (socket) ->
 
   updateAction = (message) ->
@@ -73,21 +75,29 @@ io.sockets.on 'connection', (socket) ->
     name = path.basename(url).split('.')[0]
     updateAction "git clone #{url} #{name}"
 
-    temp.mkdir name, (err, tmpFolder) ->
-      log "Got Temp", tmpFolder
-      gitclone.clone url, tmpFolder, (err, data) ->
-        log "Error", err
+    cloneTmpFolder = ""
+    Seq()
+      .seq(-> temp.mkdir name, this)
+      .seq((tmpFolder) ->
+        cloneTmpFolder = tmpFolder
+        log "Got Temp", cloneTmpFolder
+        gitclone.clone url, tmpFolder, this
+      )
+      .seq((data) ->
         log "Data", data
+
         percent += 30
         updateSuccess percent
 
         log "Deleting temp folder"
-
         updateAction "Cleaning up ..."
-        rimraf tmpFolder, (err) ->
-          log "Error", err
 
+        rimraf cloneTmpFolder, this
+      )
+      .seq(->
           percent = 100
           updateSuccess percent
+      )
+      .catch((err) -> log "Error", err)
 
 

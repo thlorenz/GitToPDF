@@ -28,6 +28,7 @@ socket.on 'failure', appendFailure
 socket.on 'connect', ->
   convertButton = $("#convertButton")
   convertInput = $("#convertInput")
+  convertInput.attr("value", "https://github.com/LearnBoost/socket.io.git")
 
   requestConversion = ->
     url = convertInput.attr("value")

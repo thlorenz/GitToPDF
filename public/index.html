@@ -13,15 +13,11 @@
     <p>Please enter a repository url and press submit in order to convert it to a pdf file</p>
     <span>Repository Url: </span>
     <input type="textarea" id="convertInput" class="convert_url"></input> 
-    <button type="button" id="convertButton">Convert</button> 
+    <button type="button" id="convertButton" class="convert_submit">Convert</button> 
   </div>
   <div id="progressDiv" display="none">
     <progress id="progressBar" max="100" value="0"></progress>
-    <div background="black" id="terminal" class="terminal">
-      <span class="terminal_prompt">supergit@gittopdfifier.com $</span>
-      <span class="terminal_action">git clone http://this.stuff</span>
-      <span class="terminal_success"> - Ok</span>
-    </div>
+    <div background="black" id="terminal" class="terminal"></div>
   </div>
 </body>
 </html>
