@@ -1,12 +1,15 @@
 #!/usr/bin/env coffee
 
 fs = require 'fs'
+rimraf = require 'rimraf'
 _ = require 'underscore'
 url = require 'url'
 http = require 'http'
 sys = require 'sys'
 path = require 'path'
 colors = require 'colors'
+temp = require './lib/temp'
+gitclone = require './lib/gitclone'
 
 port = 3000
 log = (msg, params) -> console.log msg.blue, params or ""
@@ -54,8 +57,6 @@ app.listen port
 log "App listening on", port
 
 io.sockets.on 'connection', (socket) ->
-  socket.on 'convert', (args) ->
-    log "Client requested to convert", args
 
   updateAction = (message) ->
     socket.emit 'action', { message }
@@ -63,10 +64,30 @@ io.sockets.on 'connection', (socket) ->
   updateSuccess = (percent) ->
     socket.emit 'success', { percent }
 
-  percent = 0
-  setInterval ->
-    updateAction "starting to work"
-    percent += 5
-  , 5000
+  socket.on 'convert', (args) ->
+    log "Client requested to convert", args
 
-  setInterval((-> updateSuccess percent), 3000)
+    percent = 0
+    url = args.url
+
+    name = path.basename(url).split('.')[0]
+    updateAction "git clone #{url} #{name}"
+
+    temp.mkdir name, (err, tmpFolder) ->
+      log "Got Temp", tmpFolder
+      gitclone.clone url, tmpFolder, (err, data) ->
+        log "Error", err
+        log "Data", data
+        percent += 30
+        updateSuccess percent
+
+        log "Deleting temp folder"
+
+        updateAction "Cleaning up ..."
+        rimraf tmpFolder, (err) ->
+          log "Error", err
+
+          percent = 100
+          updateSuccess percent
+
+
