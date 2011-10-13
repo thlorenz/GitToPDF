@@ -11,9 +11,15 @@ colors = require 'colors'
 Seq = require 'seq'
 temp = require './lib/temp'
 gitclone = require './lib/gitclone'
+converter = require './lib/converter'
+htmltopdf = require './lib/htmltopdf'
+
 
 port = 3000
 log = (msg, params) -> console.log msg.blue, params or ""
+
+publicFolder = path.join __dirname, "public"
+pdfsFolder = path.join publicFolder, "pdfs"
 
 handler = (req, res) ->
   reqUrl = url.parse req.url
@@ -26,7 +32,6 @@ handler = (req, res) ->
   isCss = extension == ".css"
   isImage = extension == ".ico"
 
-  publicFolder = path.join __dirname, "public"
 
   relPath = "NOTRESOLVED"
   if isHtml then relPath = path.join publicFolder, filename
@@ -73,15 +78,26 @@ io.sockets.on 'connection', (socket) ->
     url = args.url
 
     name = path.basename(url).split('.')[0]
+    htmlFileName = "#{name}.html"
+    pdfFileName = "#{name}.pdf"
+
     updateAction "git clone #{url} #{name}"
 
     cloneTmpFolder = ""
+    htmlTmpFolder = ""
     Seq()
       .seq(-> temp.mkdir name, this)
       .seq((tmpFolder) ->
         cloneTmpFolder = tmpFolder
-        log "Got Temp", cloneTmpFolder
-        gitclone.clone url, tmpFolder, this
+        log "Got Clone Temp", cloneTmpFolder
+
+        temp.mkdir "#{name}_html", this
+      )
+      .seq((tmpFolder) ->
+        htmlTmpFolder = tmpFolder
+        log "Got Html Temp", htmlTmpFolder
+
+        gitclone.clone url, cloneTmpFolder, this
       )
       .seq((data) ->
         log "Data", data
@@ -89,10 +105,37 @@ io.sockets.on 'connection', (socket) ->
         percent += 30
         updateSuccess percent
 
+        updateAction "Converting to html ..."
+
+        converter.convertToHtmlPage({
+          sourceFolder: cloneTmpFolder
+          targetFolder: htmlTmpFolder
+          targetFileName: htmlFileName}, this)
+      )
+      .seq(->
+        percent += 20
+        updateSuccess percent
+        
+        htmlPath = path.join htmlTmpFolder, htmlFileName
+        pdfPath = path.join pdfsFolder, pdfFileName
+
+        log "Converting #{htmlPath} to #{pdfPath}"
+        updateAction "Converting #{htmlFileName} to #{pdfFileName} ..."
+
+        htmltopdf.htmlToPdf htmlPath, pdfPath, this
+      )
+      .seq(->
+        percent += 30
+        updateSuccess percent
+
         log "Deleting temp folder"
         updateAction "Cleaning up ..."
 
         rimraf cloneTmpFolder, this
+      )
+      .seq(->
+        percent += 10
+        rimraf htmlTmpFolder, this
       )
       .seq(->
           percent = 100
