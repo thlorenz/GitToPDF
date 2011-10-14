@@ -22,17 +22,30 @@ socket.on 'success',(data) ->
   appendSuccess()
   $("#progressBar").attr "value", data.percent
 
-
 socket.on 'failure', appendFailure
 
+socket.on 'complete', (data) ->
+  $('#convertInput').attr('value', null)
+
+  $('.converting').hide(1000, ->
+    $('#pdflink').text "Ready for Download - #{data.pdfName}"
+    $('#pdflink').attr('href', data.pdfName)
+    $('.converted').slideDown(1000, ->
+      $('.configuring').delay(3000).fadeIn(1000)
+    )
+  )
+
 socket.on 'connect', ->
-  convertButton = $("#convertButton")
-  convertInput = $("#convertInput")
-  convertInput.attr("value", "git://github.com/LearnBoost/juice.git")
+  $('#convertInput').attr('value', 'git://github.com/LearnBoost/juice.git')
 
   requestConversion = ->
-    url = convertInput.attr("value")
-    console.log "Requesting to convert:",url
-    socket.emit 'convert', { url }
+    url = $('#convertInput').attr('value')
+    console.log 'Requesting to convert:',url
+    $('.converted').slideUp(300)
+    $('.configuring').slideUp(300, ->
+      $('.converting').slideDown(1000, ->
+        socket.emit 'convert', { url }
+      )
+    )
 
-  convertButton.click(requestConversion)
+  $('#convertButton').click(requestConversion)

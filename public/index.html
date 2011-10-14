@@ -8,14 +8,18 @@
     <link rel="stylesheet" href="style.css" type="text/css" media="all" />
 </head>
 <body>
-  <h1>Welcome to the GitToPdfifier!</h1>
-  <div>
+  <h1>GitToPdfifier</h1>
+  <div id="downloadDiv" class="converted">
+    <img src="pdf.ico"></img>
+    <a id="pdflink"></a>
+  </div>
+  <div class="configuring">
     <p>Please enter a repository url and press submit in order to convert it to a pdf file</p>
     <span>Repository Url: </span>
     <input type="textarea" id="convertInput" class="convert_url"></input> 
     <button type="button" id="convertButton" class="convert_submit">Convert</button> 
   </div>
-  <div id="progressDiv" display="none">
+  <div id="progressDiv" class="converting">
     <progress id="progressBar" max="100" value="0"></progress>
     <div background="black" id="terminal" class="terminal"></div>
   </div>

@@ -19,6 +19,9 @@ port = 3000
 log = (msg, params) -> console.log msg.blue, params or ""
 
 publicFolder = path.join __dirname, "public"
+javascriptsFolder = path.join publicFolder, "javascripts"
+styleSheetsFolder = path.join publicFolder, "stylesheets"
+imagesFolder = path.join publicFolder, "images"
 pdfsFolder = path.join publicFolder, "pdfs"
 
 handler = (req, res) ->
@@ -27,17 +30,24 @@ handler = (req, res) ->
 
   extension = path.extname filename
 
-  isHtml = extension == ".html"
-  isJavaScript = extension == ".js"
-  isCss = extension == ".css"
-  isImage = extension == ".ico"
-
-
   relPath = "NOTRESOLVED"
-  if isHtml then relPath = path.join publicFolder, filename
-  if isJavaScript then relPath = path.join publicFolder, "javascripts", filename
-  if isCss then relPath = path.join publicFolder, "stylesheets", filename
-  if isImage then relPath = path.join publicFolder, "images", filename
+  contentType = "text/plain"
+
+  switch extension
+    when ".html"
+      relPath = path.join publicFolder, filename
+      contentType = "text/html"
+    when ".js"
+      relPath = path.join javascriptsFolder, filename
+      contentType = "text/javascript"
+    when ".css"
+      relPath = path.join styleSheetsFolder, filename
+      contentType = "text/css"
+    when ".ico"
+      relPath = path.join imagesFolder, filename
+    when ".pdf"
+      relPath = path.join pdfsFolder, filename
+      contentType = "application/pdf"
 
   fs.readFile relPath, (err, data) ->
     if err
@@ -46,11 +56,6 @@ handler = (req, res) ->
       return res.end "Error loading #{relPath}"
     else
       log "Serving: ", relPath
-      contentType = "text/plain"
-
-      if isHtml then contentType = "text/html"
-      if isJavaScript then contentType = "text/javascript"
-      if isCss then contentType = "text/css"
 
       res.writeHead 200, { 'Content-Type': contentType }
       res.end data
@@ -71,20 +76,24 @@ io.sockets.on 'connection', (socket) ->
   updateSuccess = (percent) ->
     socket.emit 'success', { percent }
 
+  updateCompletion = (pdfName) ->
+    socket.emit 'complete', { pdfName }
+
   socket.on 'convert', (args) ->
     log "Client requested to convert", args
 
-    percent = 0
-    url = args.url
+    repoUrl = args.url
 
-    name = path.basename(url).split('.')[0]
+    name = path.basename(repoUrl).split('.')[0]
     htmlFileName = "#{name}.html"
     pdfFileName = "#{name}.pdf"
 
-    updateAction "git clone #{url} #{name}"
+    updateAction "git clone #{repoUrl} #{name}"
 
     cloneTmpFolder = ""
     htmlTmpFolder = ""
+    pdfPath = ""
+
     Seq()
       .seq(-> temp.mkdir name, this)
       .seq((tmpFolder) ->
@@ -97,15 +106,14 @@ io.sockets.on 'connection', (socket) ->
         htmlTmpFolder = tmpFolder
         log "Got Html Temp", htmlTmpFolder
 
-        gitclone.clone url, cloneTmpFolder, this
+        gitclone.clone repoUrl, cloneTmpFolder, this
       )
       .seq((data) ->
         log "Data", data
 
-        percent += 30
-        updateSuccess percent
+        updateSuccess 30
 
-        updateAction "Converting to html ..."
+        updateAction "Converting to #{htmlFileName} ..."
 
         converter.convertToHtmlPage({
           sourceFolder: cloneTmpFolder
@@ -113,8 +121,7 @@ io.sockets.on 'connection', (socket) ->
           targetFileName: htmlFileName}, this)
       )
       .seq(->
-        percent += 20
-        updateSuccess percent
+        updateSuccess 50
         
         htmlPath = path.join htmlTmpFolder, htmlFileName
         pdfPath = path.join pdfsFolder, pdfFileName
@@ -122,24 +129,24 @@ io.sockets.on 'connection', (socket) ->
         log "Converting #{htmlPath} to #{pdfPath}"
         updateAction "Converting #{htmlFileName} to #{pdfFileName} ..."
 
-        htmltopdf.htmlToPdf htmlPath, pdfPath, this
+        htmltopdf.convert htmlPath, pdfPath, this
       )
       .seq(->
-        percent += 30
-        updateSuccess percent
+        updateSuccess 80
 
         log "Deleting temp folder"
-        updateAction "Cleaning up ..."
+        updateAction "Removing cloned folder ..."
 
         rimraf cloneTmpFolder, this
       )
       .seq(->
-        percent += 10
+        updateSuccess 90
+        updateAction "Removing html ..."
         rimraf htmlTmpFolder, this
       )
       .seq(->
-          percent = 100
-          updateSuccess percent
+        updateSuccess 100
+        updateCompletion pdfFileName
       )
       .catch((err) -> log "Error", err)
 
