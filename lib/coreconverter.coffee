@@ -6,13 +6,6 @@ _ = require 'underscore'
 
 fu = require './fileutils'
 
-compareIgnoreCase = (a, b) ->
-  au = a.toUpperCase()
-  bu = b.toUpperCase()
-  if (au == bu) then return 0
-  if (au > bu) then return 1
-  return -1
-
 collectFilesToConvert = (config, callback) ->
 
   fu.getFoldersRec config.sourceFolder, config, (err, res) ->
@@ -23,7 +16,7 @@ collectFilesToConvert = (config, callback) ->
       isFirstFileInFolder = true
 
       rootFiles = folder.files
-        .sort(compareIgnoreCase)
+        .sort(fu.compareIgnoreCase)
         .map (x) ->
           mappedFile = {
             isFirstFileInFolder
@@ -66,20 +59,15 @@ createHtmlDoc = (name, extension, depth, foldername, folderfullname, isFirstFile
 
   { fullname: "#{folderfullname}/#{name}", extension, depth, html }
 
-createHtmlContent = (htmlDocs) ->
-  compareDocs = (a, b) ->
-    # TODO: Fix this sorting algorithm since /foo/bar/foo.js could end up inside /bar/foo/bar.js
-    #       since the depth is the same for both.
-    #       Most likely the folders need to be reanalyzed in order to sort this properly (e.g. split('/') etc.)
-    if (a.depth == b.depth) then return compareIgnoreCase(a.fullname, b.fullname)
-    if (a.depth > b.depth) then return 1 else return -1
 
+createHtmlContent = (htmlDocs) ->
   _(htmlDocs)
     .chain()
     .filter((x) -> x != null)
-    .sort(compareDocs)
+    .sort((a, b) -> fu.comparePaths(a.fullname, b.fullname))
     .pluck('html')
     .value()
     .join('<br/>')
 
 module.exports = { collectFilesToConvert, createHtmlDoc, createHtmlContent }
+

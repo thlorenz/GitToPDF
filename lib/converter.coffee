@@ -46,12 +46,12 @@ convertToHtmlPage = (config, callback) ->
 
 module.exports = { convertToHtmlPage }
 
-return
+# return
 
 # Testing
 
 targetFolder = "/users/tlorenz/dropboxes/gmail/dropbox/dev/javascript/node/gittopdf/"
-sourceFolder = "~/dev/js/node/source/socket_io/"
-targetFileName = "my code.html"
+sourceFolder = "~/dev/js/node/source/socket_io"
+targetFileName = "code.html"
 
 convertToHtmlPage({ sourceFolder, targetFolder, targetFileName, useVim: false }, -> console.log "\nEverything OK")

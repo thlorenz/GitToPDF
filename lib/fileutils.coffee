@@ -134,6 +134,36 @@ getFoldersRec = (fullPath, config, done) ->
       done null, new Folder(name, fullname, fullPath, depth, ctx.files, folders)
       this())
 
+compareIgnoreCase = (a, b) ->
+  au = a.toUpperCase()
+  bu = b.toUpperCase()
+  if (au == bu) then return 0
+  if (au > bu) then return 1
+  return -1
+
+# Compares two filepaths and returns:
+# -1 if the first path should be sorted before the second path
+#  1 if the first path should be sorted after the second path
+comparePaths = (a, b) ->
+
+  as = a.split '/'
+  bs = b.split '/'
+
+  lenA = as.length
+  lenB = bs.length
+
+  minLength = if lenA > lenB then lenB else lenA
+
+  result = 0
+  index = 0
+  while index < minLength and result == 0
+    result = compareIgnoreCase(as[index], bs[index])
+    index++
+  
+  return result if result != 0
+  return  1     if lenA < lenB
+  return -1
+
 module.exports = {
   cleanPath
   createFolder
@@ -141,4 +171,6 @@ module.exports = {
   isDirectory
   collectFilesAndFolders
   getFoldersRec
+  compareIgnoreCase
+  comparePaths
 }
