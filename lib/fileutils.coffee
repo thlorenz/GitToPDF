@@ -8,7 +8,7 @@ _ = require 'underscore'
 cleanPath = (path) ->
   if (path.indexOf '~') is 0
     path = process.env.HOME + path.substr(1)
-  
+
   # Escape all spaces
   path = path.replace(///\s///g, '\\ ')
 
@@ -91,8 +91,8 @@ collectFilesAndFolders = (fullPath, config, callback) ->
 #   depth: folder depth
 #   name:  name to give to folder, by default last folder of full path is used
 #   ignoredExts: extensions of files to be ignored, by default none are ignored
-#   ignoredFiles: files to be ignored, by default no files are ignored 
-#   ignoredFolders: folder to be ignored in the form of 'parent/child', by default no folder are ignored 
+#   ignoredFiles: files to be ignored, by default no files are ignored
+#   ignoredFolders: folder to be ignored in the form of 'parent/child', by default no folder are ignored
 getFoldersRec = (fullPath, config, done) ->
 
   depth = config?.depth or 0
@@ -159,7 +159,7 @@ comparePaths = (a, b) ->
   while index < minLength and result == 0
     result = compareIgnoreCase(as[index], bs[index])
     index++
-  
+
   return result if result != 0
   return  1     if lenA < lenB
   return -1
